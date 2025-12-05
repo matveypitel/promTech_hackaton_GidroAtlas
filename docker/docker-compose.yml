@@ -22,21 +22,27 @@ services:
 
   # GidroAtlas API Service
   api:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.api
+    image: mcr.microsoft.com/dotnet/sdk:8.0
     container_name: gidroatlas-api
     restart: unless-stopped
+    ports:
+      - "5001:8080"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=gidroatlas_db;Username=postgres;Password=postgres
       - JwtSettings__SecretKey=GidroAtlasSecretKey2024SuperSecureKeyForJwtTokenGeneration!@#$
       - JwtSettings__Issuer=GidroAtlas.Api
       - JwtSettings__Audience=GidroAtlas.Web
       - JwtSettings__ExpirationMinutes=480
-    ports:
-      - "5001:8080"
+    volumes:
+      - ..:/src
+      - /src/GidroAtlas.Api/bin
+      - /src/GidroAtlas.Api/obj
+      - /src/GidroAtlas.Shared/bin
+      - /src/GidroAtlas.Shared/obj
+    working_dir: /src/GidroAtlas.Api
+    command: dotnet watch run --no-launch-profile
     depends_on:
       postgres:
         condition: service_healthy
@@ -45,17 +51,23 @@ services:
 
   # GidroAtlas Web (Blazor) Service
   web:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.web
+    image: mcr.microsoft.com/dotnet/sdk:8.0
     container_name: gidroatlas-web
     restart: unless-stopped
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:8080
-      - ApiBaseUrl=http://api:8080
     ports:
       - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ApiBaseUrl=http://api:8080
+    volumes:
+      - ..:/src
+      - /src/GidroAtlas.Web/bin
+      - /src/GidroAtlas.Web/obj
+      - /src/GidroAtlas.Shared/bin
+      - /src/GidroAtlas.Shared/obj
+    working_dir: /src/GidroAtlas.Web
+    command: dotnet watch run --no-launch-profile
     depends_on:
       - api
     networks:
