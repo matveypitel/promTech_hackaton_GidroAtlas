@@ -8,6 +8,20 @@
 
   <ItemGroup>
     <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\" />
+    <Folder Include="Infrastructure\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GidroAtlas.Shared\GidroAtlas.Shared.csproj" />
   </ItemGroup>
 
 </Project>
