@@ -1,0 +1,70 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: gidroatlas-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gidroatlas_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - gidroatlas-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d gidroatlas_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # GidroAtlas API Service
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    container_name: gidroatlas-api
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=gidroatlas_db;Username=postgres;Password=postgres
+      - JwtSettings__SecretKey=GidroAtlasSecretKey2024SuperSecureKeyForJwtTokenGeneration!@#$
+      - JwtSettings__Issuer=GidroAtlas.Api
+      - JwtSettings__Audience=GidroAtlas.Web
+      - JwtSettings__ExpirationMinutes=480
+    ports:
+      - "5001:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - gidroatlas-network
+
+  # GidroAtlas Web (Blazor) Service
+  web:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.web
+    container_name: gidroatlas-web
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ApiBaseUrl=http://api:8080
+    ports:
+      - "5000:8080"
+    depends_on:
+      - api
+    networks:
+      - gidroatlas-network
+
+networks:
+  gidroatlas-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local

@@ -1,0 +1,22 @@
+# Build results
+**/bin/
+**/obj/
+**/out/
+**/publish/
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.userosscache
+*.suo
+
+# Git
+.git/
+.gitignore
+
+# Misc
+**/*.md
+**/Thumbs.db
+**/*.log
+.editorconfig
