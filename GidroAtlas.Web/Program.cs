@@ -1,10 +1,29 @@
 using GidroAtlas.Web.Components;
+using GidroAtlas.Web.Interfaces;
+using GidroAtlas.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Configure API base URL
+var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"] 
+    ?? throw new InvalidOperationException("API BaseUrl is not configured");
+
+// Register API services with HttpClient
+builder.Services.AddHttpClient<IAuthApiService, AuthApiService>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+
+builder.Services.AddHttpClient<IWaterObjectApiService, WaterObjectApiService>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 
 var app = builder.Build();
 

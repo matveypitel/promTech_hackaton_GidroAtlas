@@ -1,4 +1,4 @@
-using GidroAtlas.Api.Services;
+using GidroAtlas.Api.Abstractions;
 using GidroAtlas.Shared.Constants;
 using GidroAtlas.Shared.DTOs;
 using GidroAtlas.Shared.Enums;
@@ -124,6 +124,7 @@ public class WaterObjectsController : ControllerBase
     /// <summary>
     /// Gets priority statistics summary (Expert only)
     /// </summary>
+    /// TODO: Deprecate for AI usage
     [HttpGet("priorities/summary")]
     [Authorize(Policy = AuthPolicies.ExpertOnly)]
     [ProducesResponseType(StatusCodes.Status200OK)]

@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using GidroAtlas.Api.Entities;
 using GidroAtlas.Api.Infrastructure.Database;
+using GidroAtlas.Api.Options;
 using GidroAtlas.Shared.DTOs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;

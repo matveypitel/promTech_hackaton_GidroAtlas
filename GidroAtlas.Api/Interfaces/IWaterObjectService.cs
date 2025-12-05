@@ -1,7 +1,7 @@
 using GidroAtlas.Shared.DTOs;
 using GidroAtlas.Shared.Enums;
 
-namespace GidroAtlas.Api.Services;
+namespace GidroAtlas.Api.Abstractions;
 
 public interface IWaterObjectService
 {

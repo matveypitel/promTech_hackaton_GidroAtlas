@@ -1,3 +1,4 @@
+using GidroAtlas.Api.Abstractions;
 using GidroAtlas.Api.Entities;
 using GidroAtlas.Api.Infrastructure.Database;
 using GidroAtlas.Shared.DTOs;

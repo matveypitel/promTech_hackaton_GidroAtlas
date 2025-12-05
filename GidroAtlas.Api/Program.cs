@@ -1,9 +1,12 @@
+using GidroAtlas.Api.Abstractions;
 using GidroAtlas.Api.Handlers;
 using GidroAtlas.Api.Infrastructure.Auth;
 using GidroAtlas.Api.Infrastructure.Database;
+using GidroAtlas.Api.Options;
 using GidroAtlas.Api.Services;
 using GidroAtlas.Shared.Constants;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -50,8 +53,14 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IWaterObjectService, WaterObjectService>();
 
+// Register authorization handlers
+builder.Services.AddSingleton<IAuthorizationHandler, GuestAuthorizationHandler>();
+
 builder.Services.AddAuthorizationBuilder()
-    .AddPolicy(AuthPolicies.GuestOnly, policy => policy.RequireRole(Roles.Guest, Roles.Expert))
+    .AddPolicy(AuthPolicies.GuestOnly, policy => 
+    {
+        policy.Requirements.Add(new GuestRequirement());
+    })
     .AddPolicy(AuthPolicies.ExpertOnly, policy => policy.RequireRole(Roles.Expert));
 
 builder.Services.AddControllers()
@@ -59,6 +68,22 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
     });
+
+// Configure CORS
+var corsSettings = builder.Configuration.GetSection("CorsSettings");
+var allowedOrigins = corsSettings.GetSection("AllowedOrigins").Get<string[]>() 
+    ?? throw new InvalidOperationException("CORS AllowedOrigins is not configured");
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("GidroAtlasWebPolicy", policy =>
+    {
+        policy.WithOrigins(allowedOrigins)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials();
+    });
+});
     
 builder.Services.AddEndpointsApiExplorer();
 
@@ -118,6 +143,9 @@ app.UseExceptionHandler();
 app.UseHttpsRedirection();
 
 app.UseRouting();
+
+// Enable CORS
+app.UseCors("GidroAtlasWebPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();

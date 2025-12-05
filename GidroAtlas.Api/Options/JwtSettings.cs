@@ -1,4 +1,4 @@
-namespace GidroAtlas.Api.Infrastructure.Auth;
+namespace GidroAtlas.Api.Options;
 
 public class JwtSettings
 {
