@@ -5,26 +5,26 @@ namespace GidroAtlas.Shared.Enums;
 public enum SortField
 {
     [DisplayName("Название")]
-    Name,
+    Name = 0,
     
     [DisplayName("Регион")]
-    Region,
+    Region = 1,
     
     [DisplayName("Тип ресурса")]
-    ResourceType,
+    ResourceType = 2,
     
     [DisplayName("Тип воды")]
-    WaterType,
+    WaterType = 3,
     
     [DisplayName("Наличие фауны")]
-    HasFauna,
+    HasFauna = 4,
     
     [DisplayName("Дата паспорта")]
-    PassportDate,
+    PassportDate = 5,
     
     [DisplayName("Техническое состояние")]
-    TechnicalCondition,
+    TechnicalCondition = 6,
     
     [DisplayName("Приоритет")]
-    Priority
+    Priority = 7
 }

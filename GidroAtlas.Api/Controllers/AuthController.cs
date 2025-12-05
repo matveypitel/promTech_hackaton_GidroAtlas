@@ -1,5 +1,6 @@
 using GidroAtlas.Api.Infrastructure.Auth;
 using GidroAtlas.Shared.DTOs;
+using GidroAtlas.Shared.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,7 +11,7 @@ namespace GidroAtlas.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-[Produces("application/json")]
+[Produces(AppConstants.ContentTypes.ApplicationJson)]
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
@@ -39,7 +40,7 @@ public class AuthController : ControllerBase
     {
         if (string.IsNullOrWhiteSpace(request.Login) || string.IsNullOrWhiteSpace(request.Password))
         {
-            return BadRequest(new { message = "Login and password are required" });
+            return BadRequest(new { message = AppConstants.ErrorMessages.LoginPasswordRequired });
         }
 
         var result = await _authService.LoginAsync(request);
@@ -47,7 +48,7 @@ public class AuthController : ControllerBase
         if (result == null)
         {
             _logger.LogWarning("Failed login attempt for user: {Login}", request.Login);
-            return Unauthorized(new { message = "Invalid login or password" });
+            return Unauthorized(new { message = AppConstants.ErrorMessages.InvalidLoginOrPassword });
         }
 
         _logger.LogInformation("User {Login} successfully authenticated", request.Login);

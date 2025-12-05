@@ -3,6 +3,7 @@ using GidroAtlas.Api.Entities;
 using GidroAtlas.Api.Infrastructure.Database;
 using GidroAtlas.Shared.DTOs;
 using GidroAtlas.Shared.Enums;
+using GidroAtlas.Shared.Constants;
 using Microsoft.EntityFrameworkCore;
 
 namespace GidroAtlas.Api.Services;
@@ -100,15 +101,15 @@ public class WaterObjectService : IWaterObjectService
     public int CalculatePriority(int technicalCondition, DateTime passportDate)
     {
         var passportAgeYears = (DateTime.UtcNow - passportDate).Days / 365;
-        return (6 - technicalCondition) * 3 + passportAgeYears;
+        return (PriorityConstants.TechnicalConditionBase - technicalCondition) * PriorityConstants.TechnicalConditionMultiplier + passportAgeYears;
     }
 
     public PriorityLevel GetPriorityLevel(int priority)
     {
         return priority switch
         {
-            >= 12 => PriorityLevel.High,
-            >= 6 => PriorityLevel.Medium,
+            >= PriorityConstants.HighPriorityThreshold => PriorityLevel.High,
+            >= PriorityConstants.MediumPriorityThreshold => PriorityLevel.Medium,
             _ => PriorityLevel.Low
         };
     }

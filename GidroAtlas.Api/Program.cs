@@ -19,13 +19,13 @@ builder.Services.AddProblemDetails();
 
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.ConnectionStringName)));
 
 // JWT configuration
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var jwtSettings = builder.Configuration.GetSection(AppConstants.Jwt.SectionName);
 builder.Services.Configure<JwtSettings>(jwtSettings);
 
-var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey is not configured");
+var secretKey = jwtSettings[AppConstants.Jwt.SecretKey] ?? throw new InvalidOperationException("JWT SecretKey is not configured");
 var key = Encoding.UTF8.GetBytes(secretKey);
 
 builder.Services.AddAuthentication(options =>
@@ -42,9 +42,9 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(key),
         ValidateIssuer = true,
-        ValidIssuer = jwtSettings["Issuer"],
+        ValidIssuer = jwtSettings[AppConstants.Jwt.Issuer],
         ValidateAudience = true,
-        ValidAudience = jwtSettings["Audience"],
+        ValidAudience = jwtSettings[AppConstants.Jwt.Audience],
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero
     };
@@ -70,13 +70,13 @@ builder.Services.AddControllers()
     });
 
 // Configure CORS
-var corsSettings = builder.Configuration.GetSection("CorsSettings");
-var allowedOrigins = corsSettings.GetSection("AllowedOrigins").Get<string[]>() 
+var corsSettings = builder.Configuration.GetSection(AppConstants.Cors.SectionName);
+var allowedOrigins = corsSettings.GetSection(AppConstants.Cors.AllowedOrigins).Get<string[]>() 
     ?? throw new InvalidOperationException("CORS AllowedOrigins is not configured");
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("GidroAtlasWebPolicy", policy =>
+    options.AddPolicy(AppConstants.CorsPolicyName, policy =>
     {
         policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
@@ -120,6 +120,15 @@ builder.Services.AddSwaggerGen(options =>
             Array.Empty<string>()
         }
     });
+
+    // Include XML comments
+    var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    options.IncludeXmlComments(xmlPath);
+
+    var sharedXmlFile = "GidroAtlas.Shared.xml";
+    var sharedXmlPath = Path.Combine(AppContext.BaseDirectory, sharedXmlFile);
+    options.IncludeXmlComments(sharedXmlPath);
 });
 
 var app = builder.Build();
@@ -128,7 +137,6 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     dbContext.Database.EnsureCreated();
-    dbContext.Database.Migrate();
 }
 
 // Configure the HTTP request pipeline.
@@ -145,7 +153,7 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 // Enable CORS
-app.UseCors("GidroAtlasWebPolicy");
+app.UseCors(AppConstants.CorsPolicyName);
 
 app.UseAuthentication();
 app.UseAuthorization();

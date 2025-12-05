@@ -12,7 +12,7 @@ namespace GidroAtlas.Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-[Produces("application/json")]
+[Produces(AppConstants.ContentTypes.ApplicationJson)]
 public class WaterObjectsController : ControllerBase
 {
     private readonly IWaterObjectService _waterObjectService;
@@ -77,7 +77,7 @@ public class WaterObjectsController : ControllerBase
         
         if (result == null)
         {
-            return NotFound(new { message = "Water object not found" });
+            return NotFound(new { message = AppConstants.ErrorMessages.WaterObjectNotFound });
         }
 
         return Ok(result);
@@ -86,7 +86,7 @@ public class WaterObjectsController : ControllerBase
     /// <summary>
     /// Gets all available regions for filtering
     /// </summary>
-    [HttpGet("regions")]
+    [HttpGet(AppConstants.Routes.Regions)]
     [AllowAnonymous]
     [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
     public async Task<ActionResult<List<string>>> GetRegions()
@@ -98,7 +98,7 @@ public class WaterObjectsController : ControllerBase
     /// <summary>
     /// Gets prioritized water objects for inspection (Expert only)
     /// </summary>
-    [HttpGet("priorities")]
+    [HttpGet(AppConstants.Routes.Priorities)]
     [Authorize(Policy = AuthPolicies.ExpertOnly)]
     [ProducesResponseType(typeof(PagedResponseDto<WaterObjectDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -125,7 +125,7 @@ public class WaterObjectsController : ControllerBase
     /// Gets priority statistics summary (Expert only)
     /// </summary>
     /// TODO: Deprecate for AI usage
-    [HttpGet("priorities/summary")]
+    [HttpGet(AppConstants.Routes.PrioritiesSummary)]
     [Authorize(Policy = AuthPolicies.ExpertOnly)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
