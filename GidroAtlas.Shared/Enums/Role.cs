@@ -1,11 +1,12 @@
-using System.Runtime.Serialization;
+using GidroAtlas.Shared.Attributes;
 
 namespace GidroAtlas.Shared.Enums;
 
 public enum Role
 {
-    [EnumMember(Value = "Гость")]
+    [DisplayName("Гость")]
     Guest = 0,
-    [EnumMember(Value = "Эксперт")]
+    
+    [DisplayName("Эксперт")]
     Expert = 1
 }

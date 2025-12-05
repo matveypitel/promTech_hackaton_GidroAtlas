@@ -1,11 +1,12 @@
-﻿using System.Runtime.Serialization;
+﻿using GidroAtlas.Shared.Attributes;
 
 namespace GidroAtlas.Shared.Enums;
 
 public enum WaterType
 {
-    [EnumMember(Value = "Пресная")]
+    [DisplayName("Пресная")]
     Fresh = 0,
-    [EnumMember(Value = "Непресная")]
-    NonFresh = 1,
+    
+    [DisplayName("Непресная")]
+    NonFresh = 1
 }

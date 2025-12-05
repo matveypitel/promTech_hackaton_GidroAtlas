@@ -1,13 +1,15 @@
-﻿using System.Runtime.Serialization;
+﻿using GidroAtlas.Shared.Attributes;
 
 namespace GidroAtlas.Shared.Enums;
 
 public enum ResourceType
 {
-    [EnumMember(Value = "Озеро")]
+    [DisplayName("Озеро")]
     Lake = 0,
-    [EnumMember(Value = "Канал")]
+    
+    [DisplayName("Канал")]
     Canal = 1,
-    [EnumMember(Value = "Водохранилище")]
-    Reservoir = 2,
+    
+    [DisplayName("Водохранилище")]
+    Reservoir = 2
 }

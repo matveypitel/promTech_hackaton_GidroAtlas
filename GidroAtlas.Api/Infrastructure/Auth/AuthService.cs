@@ -4,19 +4,11 @@ using System.Text;
 using GidroAtlas.Api.Entities;
 using GidroAtlas.Api.Infrastructure.Database;
 using GidroAtlas.Shared.DTOs;
-using GidroAtlas.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace GidroAtlas.Api.Infrastructure.Auth;
-
-public interface IAuthService
-{
-    Task<LoginResponseDto?> LoginAsync(LoginRequestDto request);
-    Task<bool> ValidateTokenAsync(string token);
-    ClaimsPrincipal? GetPrincipalFromToken(string token);
-}
 
 public class AuthService : IAuthService
 {
@@ -106,7 +98,7 @@ public class AuthService : IAuthService
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Name, user.Login),
             new Claim(ClaimTypes.Role, user.Role.ToString()),
-            new Claim("role", user.Role.ToString()) // Дублируем для удобства на фронте
+            new Claim("role", user.Role.ToString())
         };
 
         var token = new JwtSecurityToken(

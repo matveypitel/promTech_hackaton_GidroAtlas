@@ -1,6 +1,7 @@
 using GidroAtlas.Api.Handlers;
 using GidroAtlas.Api.Infrastructure.Auth;
 using GidroAtlas.Api.Infrastructure.Database;
+using GidroAtlas.Api.Services;
 using GidroAtlas.Shared.Constants;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -47,12 +48,18 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IWaterObjectService, WaterObjectService>();
 
 builder.Services.AddAuthorizationBuilder()
     .AddPolicy(AuthPolicies.GuestOnly, policy => policy.RequireRole(Roles.Guest, Roles.Expert))
     .AddPolicy(AuthPolicies.ExpertOnly, policy => policy.RequireRole(Roles.Expert));
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
+    
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(options =>
@@ -96,6 +103,7 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     dbContext.Database.EnsureCreated();
+    dbContext.Database.Migrate();
 }
 
 // Configure the HTTP request pipeline.

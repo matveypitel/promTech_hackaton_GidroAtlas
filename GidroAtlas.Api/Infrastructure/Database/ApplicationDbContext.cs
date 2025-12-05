@@ -1,4 +1,5 @@
 using GidroAtlas.Api.Entities;
+using GidroAtlas.Api.Infrastructure.Database.Converters;
 using GidroAtlas.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -40,7 +41,7 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Role)
                 .HasColumnName("role")
                 .IsRequired()
-                .HasConversion<string>();
+                .HasConversion(new EnumDisplayNameConverter<Role>());
 
             entity.HasIndex(e => e.Login).IsUnique();
         });
@@ -68,12 +69,12 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.ResourceType)
                 .HasColumnName("resource_type")
                 .IsRequired()
-                .HasConversion<string>();
+                .HasConversion(new EnumDisplayNameConverter<ResourceType>());
 
             entity.Property(e => e.WaterType)
                 .HasColumnName("water_type")
                 .IsRequired()
-                .HasConversion<string>();
+                .HasConversion(new EnumDisplayNameConverter<WaterType>());
 
             entity.Property(e => e.HasFauna)
                 .HasColumnName("fauna")
