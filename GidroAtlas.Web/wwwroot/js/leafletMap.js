@@ -19,23 +19,43 @@ window.leafletMap = {
         }
     },
 
-    addMarker: function (lat, lng, title, markerId) {
+    addMarker: function (lat, lng, title, markerId, condition, region) {
         try {
             if (!this.map) {
                 console.error('Map not initialized');
                 return;
             }
 
-            // Создаем маркер
-            const marker = L.marker([lat, lng]).addTo(this.map);
+            // Determine color based on technical condition (1-5)
+            let color = '#808080'; // Default gray
+            switch (condition) {
+                case 1: color = '#4CAF50'; break; // Green
+                case 2: color = '#AED581'; break; // Salad/Light Green
+                case 3: color = '#FFEB3B'; break; // Yellow
+                case 4: color = '#FF9800'; break; // Orange
+                case 5: color = '#F44336'; break; // Red
+            }
 
-            // Сохраняем маркер
+            // Create CircleMarker
+            const marker = L.circleMarker([lat, lng], {
+                radius: 10,
+                fillColor: color,
+                color: '#fff', // Border color
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.9
+            }).addTo(this.map);
+
+            // Save marker
             this.markers[markerId] = marker;
 
-            // Добавляем всплывающую подсказку
-            marker.bindPopup(`<b>${title}</b>`);
+            // Add tooltip for hover (Name and Region)
+            marker.bindTooltip(`<b>${title}</b><br/>${region}`, {
+                direction: 'top',
+                offset: [0, -10]
+            });
 
-            console.log(`Marker added: ${title} at [${lat}, ${lng}]`);
+            console.log(`Marker added: ${title} [Cond:${condition}] at [${lat}, ${lng}]`);
         } catch (error) {
             console.error('Error adding marker:', error);
         }

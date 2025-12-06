@@ -74,7 +74,9 @@
                     resource.Latitude,
                     resource.Longitude,
                     resource.Name,
-                    resource.Id);
+                    resource.Id,
+                    resource.TechnicalCondition,
+                    resource.Region);
 
                 // Устанавливаем callback для клика по маркеру
                 await JS.InvokeVoidAsync("leafletMap.setMarkerClickCallback", dotNetHelper, resource.Id);
