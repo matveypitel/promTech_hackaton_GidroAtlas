@@ -62,7 +62,7 @@ services:
           devices:
             - driver: nvidia
               count: all
-              capabilities: [gpu]
+              capabilities: [ gpu ]
 
   # Auto-pull models
   ollama-setup:
@@ -108,6 +108,7 @@ services:
       - Ollama__ChatModel=qwen3:4b
       - Ollama__EmbeddingModel=nomic-embed-text
       - CorsSettings__AllowedOrigins__0=http://web:8080
+      - PASPORTS_PATH=/src
     volumes:
       - ..:/src
       - /src/GidroAtlas.Api/bin

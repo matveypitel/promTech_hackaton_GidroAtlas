@@ -256,7 +256,7 @@ public class ApplicationDbContext : DbContext
                 TechnicalCondition = 4,
                 Latitude = 46.54f,
                 Longitude = 74.88f,
-                PdfUrl = "/documents/balkhash.pdf",
+                PdfUrl = "/pasports/a1b2c3d4-1234-5678-9abc-def012345001.pdf",
                 Priority = 5
             },
             new WaterObject
@@ -271,7 +271,7 @@ public class ApplicationDbContext : DbContext
                 TechnicalCondition = 1,
                 Latitude = 46.78f,
                 Longitude = 61.04f,
-                PdfUrl = "/documents/aral.pdf",
+                PdfUrl = "/pasports/a1b2c3d4-1234-5678-9abc-def012345002.pdf",
                 Priority = 18
             },
             new WaterObject
@@ -286,7 +286,7 @@ public class ApplicationDbContext : DbContext
                 TechnicalCondition = 5,
                 Latitude = 48.00f,
                 Longitude = 84.00f,
-                PdfUrl = "/documents/zaysan.pdf",
+                PdfUrl = "/pasports/a1b2c3d4-1234-5678-9abc-def012345003.pdf",
                 Priority = 2
             },
             new WaterObject
@@ -301,7 +301,7 @@ public class ApplicationDbContext : DbContext
                 TechnicalCondition = 4,
                 Latitude = 46.15f,
                 Longitude = 81.70f,
-                PdfUrl = "/documents/alakol.pdf",
+                PdfUrl = "/pasports/a1b2c3d4-1234-5678-9abc-def012345004.pdf",
                 Priority = 5
             },
             new WaterObject
@@ -316,7 +316,7 @@ public class ApplicationDbContext : DbContext
                 TechnicalCondition = 3,
                 Latitude = 50.40f,
                 Longitude = 68.90f,
-                PdfUrl = "/documents/tengiz.pdf",
+                PdfUrl = "/pasports/a1b2c3d4-1234-5678-9abc-def012345005.pdf",
                 Priority = 10
             },
             new WaterObject
@@ -331,7 +331,7 @@ public class ApplicationDbContext : DbContext
                 TechnicalCondition = 5,
                 Latitude = 48.77f,
                 Longitude = 85.75f,
-                PdfUrl = "/documents/markakol.pdf",
+                PdfUrl = "/pasports/a1b2c3d4-1234-5678-9abc-def012345006.pdf",
                 Priority = 1
             },
             new WaterObject
@@ -346,7 +346,7 @@ public class ApplicationDbContext : DbContext
                 TechnicalCondition = 5,
                 Latitude = 43.05f,
                 Longitude = 76.98f,
-                PdfUrl = "/documents/bao.pdf",
+                PdfUrl = "/pasports/a1b2c3d4-1234-5678-9abc-def012345007.pdf",
                 Priority = 0
             },
             new WaterObject
@@ -361,7 +361,7 @@ public class ApplicationDbContext : DbContext
                 TechnicalCondition = 5,
                 Latitude = 53.07f,
                 Longitude = 70.28f,
-                PdfUrl = "/documents/borovoe.pdf",
+                PdfUrl = "/pasports/a1b2c3d4-1234-5678-9abc-def012345008.pdf",
                 Priority = 1
             },
             
@@ -378,7 +378,7 @@ public class ApplicationDbContext : DbContext
                 TechnicalCondition = 3,
                 Latitude = 43.90f,
                 Longitude = 77.18f,
-                PdfUrl = "/documents/kapshagay.pdf",
+                PdfUrl = "/pasports/b2c3d4e5-2345-6789-abcd-ef0123456001.pdf",
                 Priority = 8
             },
             new WaterObject
@@ -393,7 +393,7 @@ public class ApplicationDbContext : DbContext
                 TechnicalCondition = 4,
                 Latitude = 49.17f,
                 Longitude = 84.07f,
-                PdfUrl = "/documents/bukhtarma.pdf",
+                PdfUrl = "/pasports/b2c3d4e5-2345-6789-abcd-ef0123456002.pdf",
                 Priority = 5
             },
             new WaterObject
@@ -408,7 +408,7 @@ public class ApplicationDbContext : DbContext
                 TechnicalCondition = 3,
                 Latitude = 41.23f,
                 Longitude = 67.97f,
-                PdfUrl = "/documents/shardara.pdf",
+                PdfUrl = "/pasports/b2c3d4e5-2345-6789-abcd-ef0123456003.pdf",
                 Priority = 10
             },
             new WaterObject
@@ -423,7 +423,7 @@ public class ApplicationDbContext : DbContext
                 TechnicalCondition = 2,
                 Latitude = 50.07f,
                 Longitude = 81.45f,
-                PdfUrl = "/documents/shulbinsk.pdf",
+                PdfUrl = "/pasports/b2c3d4e5-2345-6789-abcd-ef0123456004.pdf",
                 Priority = 14
             },
             new WaterObject
@@ -438,7 +438,7 @@ public class ApplicationDbContext : DbContext
                 TechnicalCondition = 4,
                 Latitude = 43.95f,
                 Longitude = 66.93f,
-                PdfUrl = "/documents/koksaray.pdf",
+                PdfUrl = "/pasports/b2c3d4e5-2345-6789-abcd-ef0123456005.pdf",
                 Priority = 4
             },
             new WaterObject
@@ -453,7 +453,7 @@ public class ApplicationDbContext : DbContext
                 TechnicalCondition = 2,
                 Latitude = 53.88f,
                 Longitude = 67.42f,
-                PdfUrl = "/documents/sergeevka.pdf",
+                PdfUrl = "/pasports/b2c3d4e5-2345-6789-abcd-ef0123456006.pdf",
                 Priority = 17
             },
             new WaterObject
@@ -468,7 +468,7 @@ public class ApplicationDbContext : DbContext
                 TechnicalCondition = 3,
                 Latitude = 51.18f,
                 Longitude = 71.43f,
-                PdfUrl = "/documents/vyacheslavka.pdf",
+                PdfUrl = "/pasports/b2c3d4e5-2345-6789-abcd-ef0123456007.pdf",
                 Priority = 9
             },
             new WaterObject
@@ -483,7 +483,7 @@ public class ApplicationDbContext : DbContext
                 TechnicalCondition = 3,
                 Latitude = 43.72f,
                 Longitude = 76.57f,
-                PdfUrl = "/documents/kurty.pdf",
+                PdfUrl = "/pasports/b2c3d4e5-2345-6789-abcd-ef0123456008.pdf",
                 Priority = 8
             },
             
@@ -500,7 +500,7 @@ public class ApplicationDbContext : DbContext
                 TechnicalCondition = 2,
                 Latitude = 49.80f,
                 Longitude = 73.10f,
-                PdfUrl = "/documents/irtysh-karaganda.pdf",
+                PdfUrl = "/pasports/c3d4e5f6-3456-789a-bcde-f01234567001.pdf",
                 Priority = 12
             },
             new WaterObject
@@ -515,7 +515,7 @@ public class ApplicationDbContext : DbContext
                 TechnicalCondition = 4,
                 Latitude = 43.35f,
                 Longitude = 77.05f,
-                PdfUrl = "/documents/bak.pdf",
+                PdfUrl = "/pasports/c3d4e5f6-3456-789a-bcde-f01234567002.pdf",
                 Priority = 5
             },
             new WaterObject
@@ -530,7 +530,7 @@ public class ApplicationDbContext : DbContext
                 TechnicalCondition = 2,
                 Latitude = 42.50f,
                 Longitude = 68.25f,
-                PdfUrl = "/documents/arys-turkestan.pdf",
+                PdfUrl = "/pasports/c3d4e5f6-3456-789a-bcde-f01234567003.pdf",
                 Priority = 14
             },
             new WaterObject
@@ -545,7 +545,7 @@ public class ApplicationDbContext : DbContext
                 TechnicalCondition = 1,
                 Latitude = 44.85f,
                 Longitude = 65.50f,
-                PdfUrl = "/documents/kyzylorda-canal.pdf",
+                PdfUrl = "/pasports/c3d4e5f6-3456-789a-bcde-f01234567004.pdf",
                 Priority = 21
             }
         );

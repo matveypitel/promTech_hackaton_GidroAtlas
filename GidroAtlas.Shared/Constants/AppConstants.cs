@@ -35,11 +35,13 @@ public static class AppConstants
         public const string Regions = "regions";
         public const string Priorities = "priorities";
         public const string PrioritiesSummary = "priorities/summary";
+        public const string Passport = "passport";
     }
 
     public static class ContentTypes
     {
         public const string ApplicationJson = "application/json";
+        public const string ApplicationPdf = "application/pdf";
     }
 
     public static class ErrorMessages
