@@ -5,6 +5,8 @@
 @using GidroAtlas.Api.Infrastructure.Database
 @using Microsoft.EntityFrameworkCore
 @inject ApplicationDbContext DbContext
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
 
 <PageTitle>Дашборд приоритезации</PageTitle>
 
@@ -206,7 +208,24 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadRegions();
+        await LoadRegions();
         await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var role = await JS.InvokeAsync<string>("localStorage.getItem", "userRole");
+                if (role != "Expert")
+                {
+                    NavManager.NavigateTo("/map", true);
+                }
+            }
+            catch { /* ignore */ }
+        }
     }
 
     private async Task LoadRegions()

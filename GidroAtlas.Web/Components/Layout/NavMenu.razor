@@ -1,7 +1,31 @@
-﻿
+﻿@inject IJSRuntime JS
+
 <MudNavMenu>
     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Главная Страница</MudNavLink>
     <MudNavLink Href="Map" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.List">Карта</MudNavLink>
-    <MudNavLink Href="dashboard" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.People" IconColor="Color.Success">Дашборд</MudNavLink>
+    @if (isAdmin)
+    {
+        <MudNavLink Href="dashboard" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.People" IconColor="Color.Success">Дашборд</MudNavLink>
+    }
 </MudNavMenu>
 
+@code {
+    private bool isAdmin = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var role = await JS.InvokeAsync<string>("localStorage.getItem", "userRole");
+                if (role == "Expert")
+                {
+                    isAdmin = true;
+                    StateHasChanged();
+                }
+            }
+            catch { /* ignore */ }
+        }
+    }
+}

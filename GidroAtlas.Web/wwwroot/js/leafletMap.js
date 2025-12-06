@@ -26,34 +26,38 @@ window.leafletMap = {
                 return;
             }
 
-            // Determine color based on technical condition (1-5)
-            let color = '#808080'; // Default gray
-            switch (condition) {
-                case 1: color = '#4CAF50'; break; // Green
-                case 2: color = '#AED581'; break; // Salad/Light Green
-                case 3: color = '#FFEB3B'; break; // Yellow
-                case 4: color = '#FF9800'; break; // Orange
-                case 5: color = '#F44336'; break; // Red
+            if (condition && condition >= 1 && condition <= 5) {
+                // Colored CircleMarker for Admin/Conditions
+                let color = '#808080';
+                switch (condition) {
+                    case 1: color = '#4CAF50'; break;
+                    case 2: color = '#AED581'; break;
+                    case 3: color = '#FFEB3B'; break;
+                    case 4: color = '#FF9800'; break;
+                    case 5: color = '#F44336'; break;
+                }
+
+                const marker = L.circleMarker([lat, lng], {
+                    radius: 10,
+                    fillColor: color,
+                    color: '#fff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.9
+                }).addTo(this.map);
+
+                this.markers[markerId] = marker;
+
+                marker.bindTooltip(`<b>${title}</b><br/>${region}`, {
+                    direction: 'top',
+                    offset: [0, -10]
+                });
+            } else {
+                // Standard Marker for Guest
+                const marker = L.marker([lat, lng]).addTo(this.map);
+                this.markers[markerId] = marker;
+                marker.bindPopup(`<b>${title}</b><br/>${region}`);
             }
-
-            // Create CircleMarker
-            const marker = L.circleMarker([lat, lng], {
-                radius: 10,
-                fillColor: color,
-                color: '#fff', // Border color
-                weight: 2,
-                opacity: 1,
-                fillOpacity: 0.9
-            }).addTo(this.map);
-
-            // Save marker
-            this.markers[markerId] = marker;
-
-            // Add tooltip for hover (Name and Region)
-            marker.bindTooltip(`<b>${title}</b><br/>${region}`, {
-                direction: 'top',
-                offset: [0, -10]
-            });
 
             console.log(`Marker added: ${title} [Cond:${condition}] at [${lat}, ${lng}]`);
         } catch (error) {

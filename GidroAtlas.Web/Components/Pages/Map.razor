@@ -64,18 +64,25 @@
             // Создаем ссылку на этот компонент для JS Interop
             dotNetHelper = DotNetObjectReference.Create(this);
 
-            // Создание карты с центром на Казахстане
+            // Start map
             await JS.InvokeVoidAsync("leafletMap.create", "map", 48.0, 67.0, 5);
 
-            // Добавляем маркеры для всех водных ресурсов
+            // Check role
+            var userRole = await JS.InvokeAsync<string>("localStorage.getItem", "userRole");
+            var isAdmin = userRole == "Expert";
+
+            // Add markers
             foreach (var resource in waterResources)
             {
+                // Guest sees condition 0 (Standard Marker), Expert sees real condition
+                var conditionToPass = isAdmin ? resource.TechnicalCondition : 0;
+
                 await JS.InvokeVoidAsync("leafletMap.addMarker",
                     resource.Latitude,
                     resource.Longitude,
                     resource.Name,
                     resource.Id,
-                    resource.TechnicalCondition,
+                    conditionToPass,
                     resource.Region);
 
                 // Устанавливаем callback для клика по маркеру
