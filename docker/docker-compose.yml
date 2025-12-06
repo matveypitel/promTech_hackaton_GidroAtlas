@@ -1,7 +1,7 @@
 services:
-  # PostgreSQL Database
+  # PostgreSQL Database with pgvector for embeddings
   postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     container_name: gidroatlas-db
     restart: unless-stopped
     environment:
@@ -20,6 +20,74 @@ services:
       timeout: 5s
       retries: 5
 
+  # pgAdmin 4 - Админка для базы данных
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: gidroatlas-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@gidroatlas.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - gidroatlas-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Ollama for LLM
+  ollama:
+    image: ollama/ollama:latest
+    container_name: gidroatlas-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    networks:
+      - gidroatlas-network
+    healthcheck:
+      test: [ "CMD", "ollama", "list" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # Auto-pull models
+  ollama-setup:
+    image: ollama/ollama:latest
+    container_name: gidroatlas-ollama-setup
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=ollama:11434
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        echo "Pulling qwen3:4b model..."
+        ollama pull qwen3:4b
+        echo "Pulling embedding model nomic-embed-text..."
+        ollama pull nomic-embed-text
+        echo "Models ready!"
+    restart: "no"
+    networks:
+      - gidroatlas-network
+
   # GidroAtlas API Service
   api:
     image: mcr.microsoft.com/dotnet/sdk:8.0
@@ -35,6 +103,10 @@ services:
       - JwtSettings__Issuer=GidroAtlas.Api
       - JwtSettings__Audience=GidroAtlas.Web
       - JwtSettings__ExpirationMinutes=480
+      - ML__ModelType=Advanced
+      - Ollama__BaseUrl=http://ollama:11434
+      - Ollama__ChatModel=qwen3:4b
+      - Ollama__EmbeddingModel=nomic-embed-text
     volumes:
       - ..:/src
       - /src/GidroAtlas.Api/bin
@@ -45,6 +117,8 @@ services:
     command: dotnet watch run --no-launch-profile
     depends_on:
       postgres:
+        condition: service_healthy
+      ollama:
         condition: service_healthy
     networks:
       - gidroatlas-network
@@ -79,4 +153,8 @@ networks:
 
 volumes:
   postgres_data:
+    driver: local
+  ollama_data:
+    driver: local
+  pgadmin_data:
     driver: local

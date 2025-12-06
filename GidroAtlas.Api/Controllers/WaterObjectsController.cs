@@ -122,6 +122,30 @@ public class WaterObjectsController : ControllerBase
     }
 
     /// <summary>
+    /// Gets priority information for a specific water object (Expert only)
+    /// Includes ML-based attention probability prediction
+    /// </summary>
+    /// <param name="id">Water object ID</param>
+    /// <returns>Priority details with ML prediction</returns>
+    [HttpGet("{id:guid}/priority")]
+    [Authorize(Policy = AuthPolicies.ExpertOnly)]
+    [ProducesResponseType(typeof(ObjectPriorityDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ObjectPriorityDto>> GetObjectPriority(Guid id)
+    {
+        var result = await _waterObjectService.GetObjectPriorityAsync(id);
+        
+        if (result == null)
+        {
+            return NotFound(new { message = AppConstants.ErrorMessages.WaterObjectNotFound });
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Gets priority statistics summary (Expert only)
     /// </summary>
     /// TODO: Deprecate for AI usage

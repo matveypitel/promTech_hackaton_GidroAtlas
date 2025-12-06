@@ -1,6 +1,7 @@
 using GidroAtlas.Api.Abstractions;
 using GidroAtlas.Api.Entities;
 using GidroAtlas.Api.Infrastructure.Database;
+using GidroAtlas.Api.Infrastructure.ML;
 using GidroAtlas.Shared.DTOs;
 using GidroAtlas.Shared.Enums;
 using GidroAtlas.Shared.Constants;
@@ -11,10 +12,12 @@ namespace GidroAtlas.Api.Services;
 public class WaterObjectService : IWaterObjectService
 {
     private readonly ApplicationDbContext _context;
+    private readonly PredictionService _predictionService;
 
-    public WaterObjectService(ApplicationDbContext context)
+    public WaterObjectService(ApplicationDbContext context, PredictionService predictionService)
     {
         _context = context;
+        _predictionService = predictionService;
     }
 
     public async Task<PagedResponseDto<WaterObjectDto>> GetAllAsync(WaterObjectFilterDto filter)
@@ -117,6 +120,7 @@ public class WaterObjectService : IWaterObjectService
     private WaterObjectDto MapToDto(WaterObject entity)
     {
         var priority = CalculatePriority(entity.TechnicalCondition, entity.PassportDate);
+        var attentionProbability = _predictionService.GetAttentionProbability(entity);
         
         return new WaterObjectDto
         {
@@ -132,7 +136,31 @@ public class WaterObjectService : IWaterObjectService
             Longitude = entity.Longitude,
             PdfUrl = entity.PdfUrl,
             Priority = priority,
-            PriorityLevel = GetPriorityLevel(priority)
+            PriorityLevel = GetPriorityLevel(priority),
+            AttentionProbability = attentionProbability
+        };
+    }
+
+    public async Task<ObjectPriorityDto?> GetObjectPriorityAsync(Guid id)
+    {
+        var entity = await _context.WaterObjects.FindAsync(id);
+        if (entity == null) return null;
+
+        var priority = CalculatePriority(entity.TechnicalCondition, entity.PassportDate);
+        var passportAgeYears = (DateTime.UtcNow - entity.PassportDate).Days / 365;
+        var attentionProbability = _predictionService.GetAttentionProbability(entity);
+
+        return new ObjectPriorityDto
+        {
+            ObjectId = entity.Id,
+            Name = entity.Name,
+            PriorityScore = priority,
+            PriorityLevel = GetPriorityLevel(priority),
+            AttentionProbability = attentionProbability,
+            TechnicalCondition = entity.TechnicalCondition,
+            PassportAgeYears = passportAgeYears,
+            PassportDate = entity.PassportDate,
+            IsMlPredictionAvailable = _predictionService.IsModelAvailable
         };
     }
 

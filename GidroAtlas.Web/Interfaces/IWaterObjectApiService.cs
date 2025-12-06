@@ -32,4 +32,10 @@ public interface IWaterObjectApiService : IApiClient
     /// Gets priority statistics summary (requires Expert role)
     /// </summary>
     Task<PrioritySummaryDto?> GetPrioritySummaryAsync();
+
+    /// <summary>
+    /// Gets priority details for a specific water object (requires Expert role)
+    /// Includes ML-based attention probability prediction
+    /// </summary>
+    Task<ObjectPriorityDto?> GetObjectPriorityAsync(Guid id);
 }

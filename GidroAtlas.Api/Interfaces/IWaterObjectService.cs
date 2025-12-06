@@ -42,4 +42,12 @@ public interface IWaterObjectService
     /// <param name="priority">The priority score.</param>
     /// <returns>The priority level (High, Medium, Low).</returns>
     PriorityLevel GetPriorityLevel(int priority);
+
+    /// <summary>
+    /// Gets detailed priority information for a specific water object.
+    /// Includes calculated priority, ML prediction, and calculation details.
+    /// </summary>
+    /// <param name="id">The water object ID.</param>
+    /// <returns>Object priority DTO with ML prediction, or null if not found.</returns>
+    Task<ObjectPriorityDto?> GetObjectPriorityAsync(Guid id);
 }
