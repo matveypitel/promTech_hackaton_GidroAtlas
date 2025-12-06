@@ -76,5 +76,18 @@ window.leafletMap = {
         } catch (error) {
             console.error('Error setting marker click callback:', error);
         }
+    },
+
+    removeMarker: function (markerId) {
+        try {
+            const marker = this.markers[markerId];
+            if (marker) {
+                this.map.removeLayer(marker);
+                delete this.markers[markerId];
+                console.log(`Marker removed: ${markerId}`);
+            }
+        } catch (error) {
+            console.error('Error removing marker:', error);
+        }
     }
 };

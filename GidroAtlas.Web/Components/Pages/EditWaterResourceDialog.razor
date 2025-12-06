@@ -1,0 +1,201 @@
+@using GidroAtlas.Shared.DTOs
+@using GidroAtlas.Shared.Enums
+@using GidroAtlas.Web.Interfaces
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Edit" Class="mr-1" />
+            Редактирование водного ресурса
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (editModel != null)
+        {
+            <MudForm @ref="form" @bind-IsValid="@isFormValid">
+                <MudStack Spacing="3">
+                    <MudTextField @bind-Value="editModel.Name" 
+                                  Label="Название" 
+                                  Required="true" 
+                                  RequiredError="Название обязательно"
+                                  Variant="Variant.Outlined" />
+
+                    <MudTextField @bind-Value="editModel.Region" 
+                                  Label="Область" 
+                                  Required="true" 
+                                  RequiredError="Область обязательна"
+                                  Variant="Variant.Outlined" />
+
+                    <MudSelect @bind-Value="editModel.ResourceType" 
+                               Label="Тип водного ресурса" 
+                               Variant="Variant.Outlined">
+                        <MudSelectItem Value="ResourceType.Lake">Озеро</MudSelectItem>
+                        <MudSelectItem Value="ResourceType.Canal">Канал</MudSelectItem>
+                        <MudSelectItem Value="ResourceType.Reservoir">Водохранилище</MudSelectItem>
+                    </MudSelect>
+
+                    <MudSelect @bind-Value="editModel.WaterType" 
+                               Label="Тип воды" 
+                               Variant="Variant.Outlined">
+                        <MudSelectItem Value="WaterType.Fresh">Пресная</MudSelectItem>
+                        <MudSelectItem Value="WaterType.NonFresh">Непресная</MudSelectItem>
+                    </MudSelect>
+
+                    <MudSwitch @bind-Value="editModel.HasFauna" 
+                               Label="Наличие фауны" 
+                               Color="Color.Primary" />
+
+                    <MudDatePicker @bind-Date="passportDate" 
+                                   Label="Дата паспорта" 
+                                   DateFormat="dd.MM.yyyy"
+                                   Variant="Variant.Outlined" />
+
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Class="mb-2">Техническое состояние</MudText>
+                        <MudRating @bind-SelectedValue="editModel.TechnicalCondition" 
+                                   MaxValue="5" 
+                                   Color="Color.Primary" />
+                        <MudText Typo="Typo.caption">@editModel.TechnicalCondition из 5</MudText>
+                    </div>
+
+                    <MudNumericField @bind-Value="editModel.Latitude" 
+                                     Label="Широта" 
+                                     Format="F6"
+                                     Min="-90f"
+                                     Max="90f"
+                                     Step="0.000001f"
+                                     Variant="Variant.Outlined" />
+
+                    <MudNumericField @bind-Value="editModel.Longitude" 
+                                     Label="Долгота" 
+                                     Format="F6"
+                                     Min="-180f"
+                                     Max="180f"
+                                     Step="0.000001f"
+                                     Variant="Variant.Outlined" />
+
+                    @if (saveError != null)
+                    {
+                        <MudAlert Severity="Severity.Error">@saveError</MudAlert>
+                    }
+                </MudStack>
+            </MudForm>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" 
+                   Color="Color.Default" 
+                   OnClick="Cancel"
+                   Disabled="isSaving">
+            Отмена
+        </MudButton>
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Primary" 
+                   OnClick="Save"
+                   Disabled="isSaving || !isFormValid">
+            @if (isSaving)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                <span>Сохранение...</span>
+            }
+            else
+            {
+                <MudIcon Icon="@Icons.Material.Filled.Save" Class="mr-1" />
+                <span>Сохранить</span>
+            }
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance? MudDialog { get; set; }
+
+    [Parameter]
+    public WaterObjectDto? Resource { get; set; }
+    
+    [Parameter]
+    public IWaterObjectApiService? WaterObjectApi { get; set; }
+
+    private MudForm? form;
+    private UpdateWaterObjectDto? editModel;
+    private DateTime? passportDate;
+    private bool isFormValid;
+    private bool isSaving;
+    private string? saveError;
+
+    protected override void OnInitialized()
+    {
+        if (Resource != null)
+        {
+            editModel = new UpdateWaterObjectDto
+            {
+                Name = Resource.Name,
+                Region = Resource.Region,
+                ResourceType = Resource.ResourceType,
+                WaterType = Resource.WaterType,
+                HasFauna = Resource.HasFauna,
+                PassportDate = Resource.PassportDate,
+                TechnicalCondition = Resource.TechnicalCondition,
+                Latitude = Resource.Latitude,
+                Longitude = Resource.Longitude
+            };
+            passportDate = Resource.PassportDate.ToLocalTime();
+        }
+    }
+
+    private void Cancel()
+    {
+        MudDialog?.Cancel();
+    }
+
+    private async Task Save()
+    {
+        if (Resource == null || WaterObjectApi == null || editModel == null)
+            return;
+
+        if (form != null)
+        {
+            await form.Validate();
+            if (!form.IsValid)
+                return;
+        }
+
+        try
+        {
+            isSaving = true;
+            saveError = null;
+            StateHasChanged();
+
+            // Update passport date from picker
+            if (passportDate.HasValue)
+            {
+                editModel.PassportDate = DateTime.SpecifyKind(passportDate.Value.Date, DateTimeKind.Utc);
+            }
+
+            Console.WriteLine($"Updating water object: {Resource.Name} (ID: {Resource.Id})");
+            
+            var result = await WaterObjectApi.UpdateAsync(Resource.Id, editModel);
+            
+            if (result != null)
+            {
+                Console.WriteLine($"Water object updated successfully: {result.Name}");
+                MudDialog?.Close(DialogResult.Ok(result));
+            }
+            else
+            {
+                saveError = "Не удалось сохранить изменения. Проверьте подключение к серверу.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving water object: {ex.Message}");
+            saveError = $"Ошибка сохранения: {ex.Message}";
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+}

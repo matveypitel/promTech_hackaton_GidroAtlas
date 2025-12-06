@@ -2,19 +2,12 @@ using GidroAtlas.Web.Components;
 using GidroAtlas.Web.Interfaces;
 using GidroAtlas.Web.Services;
 using MudBlazor.Services;
-using GidroAtlas.Api.Infrastructure.Database;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-
-// Configure DbContext
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString, x => x.UseVector()));
 
 // Configure API base URL
 var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"]

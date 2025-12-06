@@ -46,12 +46,18 @@ public class WaterObjectService : IWaterObjectService
 
         if (filter.PassportDateFrom.HasValue)
         {
-            query = query.Where(w => w.PassportDate >= filter.PassportDateFrom.Value);
+            var dateFrom = filter.PassportDateFrom.Value.Kind == DateTimeKind.Utc 
+                ? filter.PassportDateFrom.Value 
+                : DateTime.SpecifyKind(filter.PassportDateFrom.Value, DateTimeKind.Utc);
+            query = query.Where(w => w.PassportDate >= dateFrom);
         }
 
         if (filter.PassportDateTo.HasValue)
         {
-            query = query.Where(w => w.PassportDate <= filter.PassportDateTo.Value);
+            var dateTo = filter.PassportDateTo.Value.Kind == DateTimeKind.Utc 
+                ? filter.PassportDateTo.Value 
+                : DateTime.SpecifyKind(filter.PassportDateTo.Value, DateTimeKind.Utc);
+            query = query.Where(w => w.PassportDate <= dateTo);
         }
 
         if (filter.TechnicalCondition.HasValue)
@@ -162,6 +168,32 @@ public class WaterObjectService : IWaterObjectService
             PassportDate = entity.PassportDate,
             IsMlPredictionAvailable = _predictionService.IsModelAvailable
         };
+    }
+
+    public async Task<WaterObjectDto?> UpdateAsync(Guid id, UpdateWaterObjectDto updateDto)
+    {
+        var entity = await _context.WaterObjects.FindAsync(id);
+        if (entity == null) return null;
+
+        // Update entity properties
+        entity.Name = updateDto.Name;
+        entity.Region = updateDto.Region;
+        entity.ResourceType = updateDto.ResourceType;
+        entity.WaterType = updateDto.WaterType;
+        entity.HasFauna = updateDto.HasFauna;
+        entity.PassportDate = updateDto.PassportDate.Kind == DateTimeKind.Utc 
+            ? updateDto.PassportDate 
+            : DateTime.SpecifyKind(updateDto.PassportDate, DateTimeKind.Utc);
+        entity.TechnicalCondition = updateDto.TechnicalCondition;
+        entity.Latitude = updateDto.Latitude;
+        entity.Longitude = updateDto.Longitude;
+
+        // Recalculate priority based on new values
+        entity.Priority = CalculatePriority(entity.TechnicalCondition, entity.PassportDate);
+
+        await _context.SaveChangesAsync();
+
+        return MapToDto(entity);
     }
 
     private static IQueryable<WaterObject> ApplySorting(IQueryable<WaterObject> query, SortField? sortBy, bool descending)

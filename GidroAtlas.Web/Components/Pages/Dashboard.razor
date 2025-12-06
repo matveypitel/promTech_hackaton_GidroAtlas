@@ -1,10 +1,8 @@
 @page "/dashboard"
 @using GidroAtlas.Shared.DTOs
 @using GidroAtlas.Shared.Enums
-@using GidroAtlas.Api.Entities
-@using GidroAtlas.Api.Infrastructure.Database
-@using Microsoft.EntityFrameworkCore
-@inject ApplicationDbContext DbContext
+@using GidroAtlas.Web.Interfaces
+@inject IWaterObjectApiService WaterObjectApi
 @inject NavigationManager NavManager
 @inject IJSRuntime JS
 
@@ -55,35 +53,67 @@
             <p class="text-white text-4xl font-black leading-tight tracking-[-0.033em]">Дашборд приоритезации</p>
         </header>
 
-        <div class="flex flex-col md:flex-row gap-4 items-center mb-6">
-            <!-- SearchBar -->
-            <div class="flex-grow w-full md:w-auto">
-                <label class="flex flex-col min-w-40 h-12 w-full">
-                    <div class="flex w-full flex-1 items-stretch rounded-lg h-full">
-                        <div class="text-text-secondary-dark flex bg-interactive-dark items-center justify-center pl-4 rounded-l-lg">
-                            <span class="material-symbols-outlined">search</span>
+        <!-- Search Bar -->
+        <div class="flex flex-col gap-4 mb-6">
+            <div class="flex flex-col md:flex-row gap-4 items-center">
+                <div class="flex-grow w-full md:w-auto">
+                    <label class="flex flex-col min-w-40 h-12 w-full">
+                        <div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+                            <div class="text-text-secondary-dark flex bg-interactive-dark items-center justify-center pl-4 rounded-l-lg">
+                                <span class="material-symbols-outlined">search</span>
+                            </div>
+                            <input @bind="searchText" @bind:event="oninput" @onkeyup="SearchData" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-lg text-dark focus:outline-0 focus:ring-2 focus:ring-primary focus:ring-inset border-none bg-interactive-dark h-full placeholder:text-text-secondary-dark px-4 text-base font-normal leading-normal" placeholder="Поиск по названию объекта"/>
                         </div>
-                        <input @bind="searchText" @bind:event="oninput" @onkeyup="SearchData" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-lg text-black focus:outline-0 focus:ring-2 focus:ring-primary focus:ring-inset border-none bg-interactive-dark h-full placeholder:text-text-secondary-dark px-4 text-base font-normal leading-normal" placeholder="Поиск по названию объекта"/>
-                    </div>
-                </label>
+                    </label>
+                </div>
+                <button @onclick="LoadData" class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-primary/20 text-primary px-4 hover:bg-primary/30 transition-colors">
+                    <span class="material-symbols-outlined text-sm">refresh</span>
+                    <p class="text-sm font-medium">Обновить</p>
+                </button>
+                <button @onclick="ClearFilters" class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-red-500/20 text-red-400 px-4 hover:bg-red-500/30 transition-colors">
+                    <span class="material-symbols-outlined text-sm">filter_alt_off</span>
+                    <p class="text-sm font-medium">Сбросить</p>
+                </button>
             </div>
-            <!-- Filters -->
-            <div class="flex gap-3 overflow-x-auto">
+            
+            <!-- Filters Row 1 -->
+            <div class="flex flex-wrap gap-3">
                 <!-- Region Filter -->
                 <div class="relative">
-                    <select @bind="selectedRegion" @bind:after="LoadData" class="appearance-none h-10 w-full min-w-[120px] bg-interactive-dark text-white rounded-lg pl-4 pr-10 hover:bg-interactive-dark/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                    <select @bind="selectedRegion" @bind:after="LoadData" class="appearance-none h-10 w-full min-w-[140px] bg-interactive-dark text-white rounded-lg pl-4 pr-10 hover:bg-interactive-dark/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
                         <option value="">Все области</option>
                         @foreach (var region in availableRegions)
                         {
                             <option value="@region">@region</option>
                         }
                     </select>
-                    <span class="material-symbols-outlined text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">expand_more</span>
+                    <span class="material-symbols-outlined text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-lg">expand_more</span>
+                </div>
+
+                <!-- Resource Type Filter -->
+                <div class="relative">
+                    <select @bind="selectedResourceType" @bind:after="LoadData" class="appearance-none h-10 w-full min-w-[160px] bg-interactive-dark text-white rounded-lg pl-4 pr-10 hover:bg-interactive-dark/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                        <option value="">Все типы ресурсов</option>
+                        <option value="Lake">Озеро</option>
+                        <option value="Canal">Канал</option>
+                        <option value="Reservoir">Водохранилище</option>
+                    </select>
+                    <span class="material-symbols-outlined text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-lg">expand_more</span>
+                </div>
+
+                <!-- Water Type Filter -->
+                <div class="relative">
+                    <select @bind="selectedWaterType" @bind:after="LoadData" class="appearance-none h-10 w-full min-w-[140px] bg-interactive-dark text-white rounded-lg pl-4 pr-10 hover:bg-interactive-dark/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                        <option value="">Все типы воды</option>
+                        <option value="Fresh">Пресная</option>
+                        <option value="NonFresh">Непресная</option>
+                    </select>
+                    <span class="material-symbols-outlined text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-lg">expand_more</span>
                 </div>
 
                 <!-- Condition Filter -->
                 <div class="relative">
-                    <select @bind="selectedCondition" @bind:after="LoadData" class="appearance-none h-10 w-full min-w-[140px] bg-interactive-dark text-white rounded-lg pl-4 pr-10 hover:bg-interactive-dark/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                    <select @bind="selectedCondition" @bind:after="LoadData" class="appearance-none h-10 w-full min-w-[180px] bg-interactive-dark text-white rounded-lg pl-4 pr-10 hover:bg-interactive-dark/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
                         <option value="">Все состояния</option>
                         <option value="5">Отличное (5)</option>
                         <option value="4">Хорошее (4)</option>
@@ -91,23 +121,54 @@
                         <option value="2">Плохое (2)</option>
                         <option value="1">Аварийное (1)</option>
                     </select>
-                    <span class="material-symbols-outlined text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">expand_more</span>
+                    <span class="material-symbols-outlined text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-lg">expand_more</span>
                 </div>
 
-                <!-- Priority Filter -->
+                <!-- Has Fauna Filter -->
                 <div class="relative">
-                    <select @bind="selectedPriority" @bind:after="LoadData" class="appearance-none h-10 w-full min-w-[130px] bg-interactive-dark text-white rounded-lg pl-4 pr-10 hover:bg-interactive-dark/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
-                        <option value="">Все приоритеты</option>
-                        <option value="2">Высокий</option>
-                        <option value="1">Средний</option>
-                        <option value="0">Низкий</option>
+                    <select @bind="selectedHasFauna" @bind:after="LoadData" class="appearance-none h-10 w-full min-w-[140px] bg-interactive-dark text-white rounded-lg pl-4 pr-10 hover:bg-interactive-dark/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                        <option value="">Фауна: все</option>
+                        <option value="true">С фауной</option>
+                        <option value="false">Без фауны</option>
                     </select>
-                    <span class="material-symbols-outlined text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">expand_more</span>
+                    <span class="material-symbols-outlined text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-lg">expand_more</span>
                 </div>
             </div>
-            <button @onclick="LoadData" class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-primary/20 text-primary px-4 hover:bg-primary/30 transition-colors">
-                <p class="text-sm font-medium">Обновить</p>
-            </button>
+
+            <!-- Filters Row 2 - Dates and Sorting -->
+            <div class="flex flex-wrap gap-3 items-center">
+                <!-- Passport Date From -->
+                <div class="flex items-center gap-2">
+                    <span class="text-text-secondary-dark text-sm">Паспорт с:</span>
+                    <input type="date" @bind="passportDateFrom" @bind:after="LoadData" 
+                           class="h-10 bg-interactive-dark text-dark rounded-lg px-3 border-none focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"/>
+                </div>
+
+                <!-- Passport Date To -->
+                <div class="flex items-center gap-2">
+                    <span class="text-text-secondary-dark text-sm">по:</span>
+                    <input type="date" @bind="passportDateTo" @bind:after="LoadData" 
+                           class="h-10 bg-interactive-dark text-dark rounded-lg px-3 border-none focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"/>
+                </div>
+
+                <!-- Sort By -->
+                <div class="relative ml-auto">
+                    <select @bind="selectedSortField" @bind:after="LoadData" class="appearance-none h-10 w-full min-w-[160px] bg-interactive-dark text-white rounded-lg pl-4 pr-10 hover:bg-interactive-dark/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                        <option value="Priority">По приоритету</option>
+                        <option value="Name">По названию</option>
+                        <option value="Region">По области</option>
+                        <option value="TechnicalCondition">По состоянию</option>
+                        <option value="PassportDate">По дате паспорта</option>
+                    </select>
+                    <span class="material-symbols-outlined text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-lg">expand_more</span>
+                </div>
+
+                <!-- Sort Direction -->
+                <button @onclick="ToggleSortDirection" class="flex h-10 items-center justify-center gap-2 rounded-lg bg-interactive-dark text-white px-4 hover:bg-interactive-dark/80 transition-colors">
+                    <span class="material-symbols-outlined">@(sortDescending ? "arrow_downward" : "arrow_upward")</span>
+                    <span class="text-sm">@(sortDescending ? "По убыв." : "По возр.")</span>
+                </button>
+            </div>
         </div>
 
         <!-- Table -->
@@ -116,38 +177,43 @@
                 <table class="w-full">
                     <thead class="bg-surface-dark">
                         <tr class="border-b border-border-dark">
-                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal w-2/5">
-                                <div class="flex items-center gap-2 cursor-pointer">Название <span class="material-symbols-outlined text-base">swap_vert</span></div>
+                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal">
+                                Название
                             </th>
-                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal w-1/5">
-                                <div class="flex items-center gap-2 cursor-pointer">Область <span class="material-symbols-outlined text-base">swap_vert</span></div>
+                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal">
+                                Область
                             </th>
-                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal w-1/5">
-                                <div class="flex items-center gap-2 cursor-pointer">Состояние <span class="material-symbols-outlined text-base">swap_vert</span></div>
+                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal">
+                                Тип ресурса
                             </th>
-                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal w-1/5">
-                                <div class="flex items-center gap-2 cursor-pointer">Дата паспорта <span class="material-symbols-outlined text-base">swap_vert</span></div>
+                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal">
+                                Состояние
                             </th>
-                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal w-1/5">
-                                <div class="flex items-center gap-2 cursor-pointer">Приоритет <span class="material-symbols-outlined text-base">swap_vert</span></div>
+                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal">
+                                Дата паспорта
+                            </th>
+                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal">
+                                Приоритет
                             </th>
                         </tr>
                     </thead>
                     <tbody>
-                        @if (waterObjects == null)
+                        @if (isLoading)
                         {
-                            if (loadError != null)
-                            {
-                                <tr><td colspan="5" class="px-4 py-8 text-white text-center text-red-500">Ошибка загрузки: @loadError</td></tr>
-                            }
-                            else
-                            {
-                                <tr><td colspan="5" class="px-4 py-8 text-white text-center">Загрузка данных...</td></tr>
-                            }
+                            <tr><td colspan="6" class="px-4 py-8 text-white text-center">
+                                <div class="flex items-center justify-center gap-2">
+                                    <span class="material-symbols-outlined animate-spin">progress_activity</span>
+                                    Загрузка данных...
+                                </div>
+                            </td></tr>
                         }
-                        else if (!waterObjects.Any())
+                        else if (loadError != null)
                         {
-                            <tr><td colspan="5" class="px-4 py-8 text-white text-center">По вашему запросу ничего не найдено</td></tr>
+                            <tr><td colspan="6" class="px-4 py-8 text-center text-red-500">Ошибка загрузки: @loadError</td></tr>
+                        }
+                        else if (waterObjects == null || !waterObjects.Any())
+                        {
+                            <tr><td colspan="6" class="px-4 py-8 text-white text-center">По вашему запросу ничего не найдено</td></tr>
                         }
                         else
                         {
@@ -156,6 +222,9 @@
                                 <tr class="border-t border-border-dark hover:bg-interactive-dark/40 transition-colors">
                                     <td class="h-[72px] px-4 py-2 text-white text-sm font-normal leading-normal">@item.Name</td>
                                     <td class="h-[72px] px-4 py-2 text-text-secondary-dark text-sm font-normal leading-normal">@item.Region</td>
+                                    <td class="h-[72px] px-4 py-2 text-text-secondary-dark text-sm font-normal leading-normal">
+                                        @GetResourceTypeText(item.ResourceType)
+                                    </td>
                                     <td class="h-[72px] px-4 py-2 text-text-secondary-dark text-sm font-normal leading-normal">
                                         @GetConditionText(item.TechnicalCondition)
                                     </td>
@@ -179,13 +248,13 @@
 
         <!-- Pagination -->
         <div class="flex items-center justify-between mt-6 text-text-secondary-dark">
-            <p class="text-sm">Показано @(waterObjects?.Count ?? 0) объектов, Страница @currentPage</p>
+            <p class="text-sm">Показано @(waterObjects?.Count ?? 0) из @totalCount объектов, Страница @currentPage из @totalPages</p>
             <div class="flex items-center gap-2">
                 <button @onclick="PrevPage" class="flex items-center justify-center size-8 rounded-lg hover:bg-interactive-dark/50 transition-colors disabled:opacity-50" disabled="@(currentPage == 1)">
                     <span class="material-symbols-outlined">chevron_left</span>
                 </button>
                 <button class="flex items-center justify-center size-8 rounded-lg bg-primary text-white">@currentPage</button>
-                <button @onclick="NextPage" class="flex items-center justify-center size-8 rounded-lg hover:bg-interactive-dark/50 transition-colors disabled:opacity-50" disabled="@(waterObjects == null || waterObjects.Count < 10)">
+                <button @onclick="NextPage" class="flex items-center justify-center size-8 rounded-lg hover:bg-interactive-dark/50 transition-colors disabled:opacity-50" disabled="@(!hasMorePages)">
                     <span class="material-symbols-outlined">chevron_right</span>
                 </button>
             </div>
@@ -197,18 +266,32 @@
     private List<WaterObjectDto>? waterObjects;
     private int totalCount;
     private int currentPage = 1;
-    private string searchText = "";
+    private int pageSize = 20;
+    private int totalPages = 1;
+    private bool hasMorePages;
+    private bool isLoading;
     private string? loadError;
+    private string? authToken;
+    
+    // Search
+    private string searchText = "";
+    
     // Filters
     private List<string> availableRegions = new();
     private string selectedRegion = "";
-    private string selectedCondition = ""; // Parse to int?
-    private string selectedPriority = ""; // Parse to int?
+    private string selectedResourceType = "";
+    private string selectedWaterType = "";
+    private string selectedCondition = "";
+    private string selectedHasFauna = "";
+    private DateTime? passportDateFrom;
+    private DateTime? passportDateTo;
+    
+    // Sorting
+    private string selectedSortField = "Priority";
+    private bool sortDescending = true;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadRegions();
-        await LoadRegions();
         await LoadData();
     }
 
@@ -222,7 +305,19 @@
                 if (role != "Expert")
                 {
                     NavManager.NavigateTo("/map", true);
+                    return;
                 }
+                
+                // Get token for API calls
+                authToken = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+                if (!string.IsNullOrEmpty(authToken))
+                {
+                    WaterObjectApi.SetAuthToken(authToken);
+                }
+                
+                await LoadRegions();
+                await LoadData();
+                StateHasChanged();
             }
             catch { /* ignore */ }
         }
@@ -232,11 +327,11 @@
     {
         try 
         {
-            availableRegions = await DbContext.WaterObjects
-                .Select(x => x.Region)
-                .Distinct()
-                .OrderBy(x => x)
-                .ToListAsync();
+            var regions = await WaterObjectApi.GetRegionsAsync();
+            if (regions != null)
+            {
+                availableRegions = regions.Order().ToList();
+            }
         }
         catch (Exception ex)
         {
@@ -248,57 +343,81 @@
     {
         try
         {
-            var query = DbContext.WaterObjects.AsNoTracking().AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(searchText))
-            {
-                query = query.Where(w => w.Name.ToLower().Contains(searchText.ToLower()));
-            }
-
-            if (!string.IsNullOrWhiteSpace(selectedRegion))
-            {
-                query = query.Where(w => w.Region == selectedRegion);
-            }
-
-            if (!string.IsNullOrWhiteSpace(selectedCondition) && int.TryParse(selectedCondition, out int cond))
-            {
-                query = query.Where(w => w.TechnicalCondition == cond);
-            }
-
-            if (!string.IsNullOrWhiteSpace(selectedPriority) && int.TryParse(selectedPriority, out int priority))
-            {
-                query = query.Where(w => w.Priority == priority);
-            }
-
-            totalCount = await query.CountAsync();
-
-            // Default sort by Priority (High to Low?)
-            // PriorityLevel: High=2, Medium=1, Low=0. So Descending gives High first.
-            // Entity Priority: assuming matches enum.
-
-            var items = await query
-                .OrderByDescending(w => w.Priority)
-                .Skip((currentPage - 1) * 10)
-                .Take(10)
-                .Select(w => new WaterObjectDto
-                {
-                    Id = w.Id,
-                    Name = w.Name,
-                    Region = w.Region,
-                    TechnicalCondition = w.TechnicalCondition,
-                    PassportDate = w.PassportDate,
-                    PriorityLevel = (PriorityLevel)w.Priority,
-                    PdfUrl = w.PdfUrl
-                })
-                .ToListAsync();
-
-            waterObjects = items;
+            isLoading = true;
+            loadError = null;
             StateHasChanged();
+            
+            // Parse enum values
+            ResourceType? resourceType = null;
+            if (!string.IsNullOrEmpty(selectedResourceType) && Enum.TryParse<ResourceType>(selectedResourceType, out var rt))
+            {
+                resourceType = rt;
+            }
+            
+            WaterType? waterType = null;
+            if (!string.IsNullOrEmpty(selectedWaterType) && Enum.TryParse<WaterType>(selectedWaterType, out var wt))
+            {
+                waterType = wt;
+            }
+            
+            bool? hasFauna = null;
+            if (!string.IsNullOrEmpty(selectedHasFauna))
+            {
+                hasFauna = selectedHasFauna == "true";
+            }
+            
+            int? technicalCondition = null;
+            if (!string.IsNullOrEmpty(selectedCondition) && int.TryParse(selectedCondition, out var tc))
+            {
+                technicalCondition = tc;
+            }
+            
+            SortField? sortField = null;
+            if (!string.IsNullOrEmpty(selectedSortField) && Enum.TryParse<SortField>(selectedSortField, out var sf))
+            {
+                sortField = sf;
+            }
+            
+            // Build filter
+            var filter = new WaterObjectFilterDto
+            {
+                Region = string.IsNullOrEmpty(selectedRegion) ? null : selectedRegion,
+                ResourceType = resourceType,
+                WaterType = waterType,
+                HasFauna = hasFauna,
+                PassportDateFrom = passportDateFrom,
+                PassportDateTo = passportDateTo,
+                TechnicalCondition = technicalCondition,
+                SearchQuery = string.IsNullOrEmpty(searchText) ? null : searchText,
+                SortBy = sortField,
+                SortDescending = sortDescending,
+                Page = currentPage,
+                PageSize = pageSize
+            };
+
+            var response = await WaterObjectApi.GetAllAsync(filter);
+            
+            if (response != null)
+            {
+                waterObjects = response.Items.ToList();
+                totalCount = response.TotalCount;
+                totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+                if (totalPages < 1) totalPages = 1;
+                hasMorePages = currentPage < totalPages;
+            }
+            else
+            {
+                loadError = "Не удалось загрузить данные. Проверьте подключение к API.";
+            }
         }
         catch (Exception ex)
         {
             loadError = ex.Message + (ex.InnerException != null ? $" Inner: {ex.InnerException.Message}" : "");
             Console.WriteLine($"Error loading dashboard data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
             StateHasChanged();
         }
     }
@@ -311,8 +430,11 @@
 
     private async Task NextPage()
     {
-        currentPage++;
-        await LoadData();
+        if (hasMorePages)
+        {
+            currentPage++;
+            await LoadData();
+        }
     }
 
     private async Task PrevPage()
@@ -324,6 +446,29 @@
         }
     }
 
+    private async Task ToggleSortDirection()
+    {
+        sortDescending = !sortDescending;
+        currentPage = 1;
+        await LoadData();
+    }
+
+    private async Task ClearFilters()
+    {
+        searchText = "";
+        selectedRegion = "";
+        selectedResourceType = "";
+        selectedWaterType = "";
+        selectedCondition = "";
+        selectedHasFauna = "";
+        passportDateFrom = null;
+        passportDateTo = null;
+        selectedSortField = "Priority";
+        sortDescending = true;
+        currentPage = 1;
+        await LoadData();
+    }
+
     private string GetConditionText(int condition) => condition switch
     {
         1 => "Аварийное",
@@ -332,6 +477,14 @@
         4 => "Хорошее",
         5 => "Отличное",
         _ => condition.ToString()
+    };
+
+    private string GetResourceTypeText(ResourceType type) => type switch
+    {
+        ResourceType.Lake => "Озеро",
+        ResourceType.Canal => "Канал",
+        ResourceType.Reservoir => "Водохранилище",
+        _ => type.ToString()
     };
 
     private (string BgColor, string TextColor, string Label) GetPriorityStyle(PriorityLevel level) => level switch

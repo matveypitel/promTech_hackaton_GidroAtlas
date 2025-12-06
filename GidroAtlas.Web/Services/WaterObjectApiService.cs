@@ -2,6 +2,8 @@ using GidroAtlas.Shared.DTOs;
 using GidroAtlas.Shared.Enums;
 using GidroAtlas.Web.Interfaces;
 using System.Net.Http.Headers;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace GidroAtlas.Web.Services;
 
@@ -12,15 +14,16 @@ public class WaterObjectApiService : IWaterObjectApiService
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<WaterObjectApiService> _logger;
-    private readonly System.Text.Json.JsonSerializerOptions _jsonOptions;
+    private readonly JsonSerializerOptions _jsonOptions;
 
     public WaterObjectApiService(HttpClient httpClient, ILogger<WaterObjectApiService> logger)
     {
         _httpClient = httpClient;
         _logger = logger;
-        _jsonOptions = new System.Text.Json.JsonSerializerOptions 
+        _jsonOptions = new JsonSerializerOptions 
         { 
-            PropertyNameCaseInsensitive = true 
+            PropertyNameCaseInsensitive = true,
+            Converters = { new JsonStringEnumConverter() }
         };
     }
 
@@ -54,10 +57,17 @@ public class WaterObjectApiService : IWaterObjectApiService
                 queryParams.Add($"hasFauna={filter.HasFauna}");
             
             if (filter.PassportDateFrom.HasValue)
-                queryParams.Add($"passportDateFrom={filter.PassportDateFrom:O}");
+            {
+                var utcDateFrom = DateTime.SpecifyKind(filter.PassportDateFrom.Value.Date, DateTimeKind.Utc);
+                queryParams.Add($"passportDateFrom={utcDateFrom:O}");
+            }
             
             if (filter.PassportDateTo.HasValue)
-                queryParams.Add($"passportDateTo={filter.PassportDateTo:O}");
+            {
+                // Set to end of day for "to" date
+                var utcDateTo = DateTime.SpecifyKind(filter.PassportDateTo.Value.Date.AddDays(1).AddTicks(-1), DateTimeKind.Utc);
+                queryParams.Add($"passportDateTo={utcDateTo:O}");
+            }
             
             if (filter.TechnicalCondition.HasValue)
                 queryParams.Add($"technicalCondition={filter.TechnicalCondition}");
@@ -209,6 +219,57 @@ public class WaterObjectApiService : IWaterObjectApiService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error getting object priority for id: {Id}", id);
+            return null;
+        }
+    }
+
+    public async Task<(byte[] Content, string ContentType, string FileName)?> GetPassportAsync(Guid id)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"api/waterobjects/{id}/passport");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsByteArrayAsync();
+                var contentType = response.Content.Headers.ContentType?.MediaType ?? "application/pdf";
+                
+                // Try to get filename from Content-Disposition header
+                var contentDisposition = response.Content.Headers.ContentDisposition;
+                var fileName = contentDisposition?.FileNameStar 
+                    ?? contentDisposition?.FileName?.Trim('"') 
+                    ?? $"passport_{id}.pdf";
+                
+                return (content, contentType, fileName);
+            }
+            
+            _logger.LogWarning("GetPassport failed with status code: {StatusCode}", response.StatusCode);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting passport for water object id: {Id}", id);
+            return null;
+        }
+    }
+
+    public async Task<WaterObjectDto?> UpdateAsync(Guid id, UpdateWaterObjectDto updateDto)
+    {
+        try
+        {
+            var response = await _httpClient.PutAsJsonAsync($"api/waterobjects/{id}", updateDto, _jsonOptions);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<WaterObjectDto>(_jsonOptions);
+            }
+            
+            _logger.LogWarning("Update failed with status code: {StatusCode}", response.StatusCode);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating water object id: {Id}", id);
             return null;
         }
     }

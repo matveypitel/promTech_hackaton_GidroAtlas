@@ -50,4 +50,12 @@ public interface IWaterObjectService
     /// <param name="id">The water object ID.</param>
     /// <returns>Object priority DTO with ML prediction, or null if not found.</returns>
     Task<ObjectPriorityDto?> GetObjectPriorityAsync(Guid id);
+
+    /// <summary>
+    /// Updates an existing water object by its unique identifier.
+    /// </summary>
+    /// <param name="id">The unique identifier of the water object.</param>
+    /// <param name="updateDto">The updated water object data.</param>
+    /// <returns>The updated water object DTO if found; otherwise, null.</returns>
+    Task<WaterObjectDto?> UpdateAsync(Guid id, UpdateWaterObjectDto updateDto);
 }

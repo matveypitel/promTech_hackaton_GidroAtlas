@@ -217,4 +217,31 @@ public class WaterObjectsController : ControllerBase
 
         return Ok(summary);
     }
+
+    /// <summary>
+    /// Updates a water object by ID (Expert only)
+    /// </summary>
+    /// <param name="id">Water object ID</param>
+    /// <param name="updateDto">Updated water object data</param>
+    /// <returns>Updated water object</returns>
+    [HttpPut("{id:guid}")]
+    [Authorize(Policy = AuthPolicies.ExpertOnly)]
+    [ProducesResponseType(typeof(WaterObjectDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<WaterObjectDto>> Update(Guid id, [FromBody] UpdateWaterObjectDto updateDto)
+    {
+        _logger.LogInformation("Updating water object {Id}", id);
+        
+        var result = await _waterObjectService.UpdateAsync(id, updateDto);
+        
+        if (result == null)
+        {
+            return NotFound(new { message = AppConstants.ErrorMessages.WaterObjectNotFound });
+        }
+
+        _logger.LogInformation("Water object {Id} updated successfully", id);
+        return Ok(result);
+    }
 }

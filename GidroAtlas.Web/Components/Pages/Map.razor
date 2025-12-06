@@ -1,10 +1,10 @@
 ﻿@page "/map"
 @inject IJSRuntime JS
 @inject IDialogService DialogService
-@using GidroAtlas.Api.Infrastructure.Database
-@using GidroAtlas.Api.Entities
-@using Microsoft.EntityFrameworkCore
-@inject ApplicationDbContext DbContext
+@using GidroAtlas.Shared.DTOs
+@using GidroAtlas.Shared.Enums
+@using GidroAtlas.Web.Interfaces
+@inject IWaterObjectApiService WaterObjectApi
 @implements IDisposable
 
 <PageTitle>Карта водных ресурсов</PageTitle>
@@ -24,29 +24,28 @@
 
 @code {
     private DotNetObjectReference<Map>? dotNetHelper;
-
-    // Список водных ресурсов
-    private List<WaterResource> waterResources = new();
+    private List<WaterObjectDto> waterResources = new();
     private string? loadError;
+    private bool isExpert;
+    private string? authToken;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            var entities = await DbContext.WaterObjects.AsNoTracking().ToListAsync();
-            waterResources = entities.Select(e => new WaterResource
+            var response = await WaterObjectApi.GetAllAsync(new WaterObjectFilterDto 
+            { 
+                PageSize = 1000 // Load all objects for the map
+            });
+            
+            if (response != null)
             {
-                Id = e.Id.ToString(),
-                Name = e.Name,
-                Region = e.Region,
-                ResourceType = (ResourceType)(int)e.ResourceType,
-                WaterType = (WaterType)(int)e.WaterType,
-                HasFauna = e.HasFauna,
-                PassportDate = e.PassportDate,
-                TechnicalCondition = e.TechnicalCondition,
-                Latitude = e.Latitude,
-                Longitude = e.Longitude
-            }).ToList();
+                waterResources = response.Items.ToList();
+            }
+            else
+            {
+                loadError = "Не удалось загрузить данные с сервера";
+            }
         }
         catch (Exception ex)
         {
@@ -64,29 +63,35 @@
             // Создаем ссылку на этот компонент для JS Interop
             dotNetHelper = DotNetObjectReference.Create(this);
 
+            // Check role and get auth token
+            var userRole = await JS.InvokeAsync<string>("localStorage.getItem", "userRole");
+            isExpert = userRole == "Expert";
+            
+            authToken = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+            if (!string.IsNullOrEmpty(authToken))
+            {
+                WaterObjectApi.SetAuthToken(authToken);
+            }
+
             // Start map
             await JS.InvokeVoidAsync("leafletMap.create", "map", 48.0, 67.0, 5);
-
-            // Check role
-            var userRole = await JS.InvokeAsync<string>("localStorage.getItem", "userRole");
-            var isAdmin = userRole == "Expert";
 
             // Add markers
             foreach (var resource in waterResources)
             {
                 // Guest sees condition 0 (Standard Marker), Expert sees real condition
-                var conditionToPass = isAdmin ? resource.TechnicalCondition : 0;
+                var conditionToPass = isExpert ? resource.TechnicalCondition : 0;
 
                 await JS.InvokeVoidAsync("leafletMap.addMarker",
-                    resource.Latitude,
-                    resource.Longitude,
+                    (double)resource.Latitude,
+                    (double)resource.Longitude,
                     resource.Name,
-                    resource.Id,
+                    resource.Id.ToString(),
                     conditionToPass,
                     resource.Region);
 
                 // Устанавливаем callback для клика по маркеру
-                await JS.InvokeVoidAsync("leafletMap.setMarkerClickCallback", dotNetHelper, resource.Id);
+                await JS.InvokeVoidAsync("leafletMap.setMarkerClickCallback", dotNetHelper, resource.Id.ToString());
             }
 
             Console.WriteLine("Map initialized successfully");
@@ -100,12 +105,18 @@
     [JSInvokable]
     public async Task OnMarkerClicked(string resourceId)
     {
-        var selectedResource = waterResources.FirstOrDefault(r => r.Id == resourceId);
+        if (!Guid.TryParse(resourceId, out var id))
+            return;
+            
+        var selectedResource = waterResources.FirstOrDefault(r => r.Id == id);
         if (selectedResource != null)
         {
             var parameters = new DialogParameters<WaterResourceDialog>
             {
-                { x => x.Resource, selectedResource }
+                { x => x.Resource, selectedResource },
+                { x => x.WaterObjectApi, WaterObjectApi },
+                { x => x.IsExpert, isExpert },
+                { x => x.OnUpdated, EventCallback.Factory.Create<WaterObjectDto>(this, HandleWaterObjectUpdated) }
             };
 
             var options = new DialogOptions
@@ -119,37 +130,44 @@
         }
     }
 
+    private async Task HandleWaterObjectUpdated(WaterObjectDto updatedResource)
+    {
+        // Update local list
+        var index = waterResources.FindIndex(r => r.Id == updatedResource.Id);
+        if (index >= 0)
+        {
+            waterResources[index] = updatedResource;
+        }
+
+        // Update marker on the map
+        try
+        {
+            // Remove old marker and add updated one
+            await JS.InvokeVoidAsync("leafletMap.removeMarker", updatedResource.Id.ToString());
+            
+            var conditionToPass = isExpert ? updatedResource.TechnicalCondition : 0;
+            await JS.InvokeVoidAsync("leafletMap.addMarker",
+                (double)updatedResource.Latitude,
+                (double)updatedResource.Longitude,
+                updatedResource.Name,
+                updatedResource.Id.ToString(),
+                conditionToPass,
+                updatedResource.Region);
+            
+            await JS.InvokeVoidAsync("leafletMap.setMarkerClickCallback", dotNetHelper, updatedResource.Id.ToString());
+            
+            Console.WriteLine($"Map marker updated for: {updatedResource.Name}");
+        }
+        catch (JSException ex)
+        {
+            Console.WriteLine($"Error updating map marker: {ex.Message}");
+        }
+        
+        StateHasChanged();
+    }
+
     public void Dispose()
     {
         dotNetHelper?.Dispose();
-    }
-
-    // Модели данных
-    public class WaterResource
-    {
-        public string Id { get; set; } = string.Empty;
-        public string Name { get; set; } = string.Empty;
-        public string Region { get; set; } = string.Empty;
-        public ResourceType ResourceType { get; set; }
-        public WaterType WaterType { get; set; }
-        public bool HasFauna { get; set; }
-        public DateTime PassportDate { get; set; }
-        public int TechnicalCondition { get; set; } // 1-5
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
-    }
-
-    public enum ResourceType
-    {
-        Lake,
-        Canal,
-        Reservoir
-    }
-
-    public enum WaterType
-    {
-        Fresh,
-        NonFresh,
-        Mixed
     }
 }

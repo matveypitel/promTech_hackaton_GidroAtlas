@@ -1,4 +1,8 @@
-﻿@using static GidroAtlas.Web.Components.Pages.Map
+﻿@using GidroAtlas.Shared.DTOs
+@using GidroAtlas.Shared.Enums
+@using GidroAtlas.Web.Interfaces
+@inject IJSRuntime JS
+@inject IDialogService DialogService
 
 <MudDialog>
     <TitleContent>
@@ -54,13 +58,49 @@
                         📍 Широта: @Resource.Latitude.ToString("F6")°, Долгота: @Resource.Longitude.ToString("F6")°
                     </MudText>
                 </div>
+                
+                @if (IsExpert && Resource.PriorityLevel != PriorityLevel.Low)
+                {
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Color="Color.Primary">Приоритет</MudText>
+                        <MudChip T="string" 
+                                 Color="@GetPriorityColor(Resource.PriorityLevel)" 
+                                 Size="Size.Small">
+                            @GetPriorityText(Resource.PriorityLevel)
+                        </MudChip>
+                    </div>
+                }
+                
+                @if (downloadError != null)
+                {
+                    <MudAlert Severity="Severity.Error" Class="mt-2">@downloadError</MudAlert>
+                }
             </MudStack>
         }
     </DialogContent>
     <DialogActions>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OpenPassport">
-            Открыть паспорт
-        </MudButton>
+        @if (IsExpert)
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                           Color="Color.Warning" 
+                           OnClick="OpenEditDialog"
+                           Title="Редактировать" />
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       OnClick="OpenPassport"
+                       Disabled="isDownloading">
+                @if (isDownloading)
+                {
+                    <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2" />
+                    <span>Загрузка...</span>
+                }
+                else
+                {
+                    <MudIcon Icon="@Icons.Material.Filled.PictureAsPdf" Class="mr-1" />
+                    <span>Открыть паспорт</span>
+                }
+            </MudButton>
+        }
         <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Submit">
             Закрыть
         </MudButton>
@@ -72,19 +112,102 @@
     private IMudDialogInstance? MudDialog { get; set; }
 
     [Parameter]
-    public WaterResource? Resource { get; set; }
+    public WaterObjectDto? Resource { get; set; }
+    
+    [Parameter]
+    public IWaterObjectApiService? WaterObjectApi { get; set; }
+    
+    [Parameter]
+    public bool IsExpert { get; set; }
+    
+    [Parameter]
+    public EventCallback<WaterObjectDto> OnUpdated { get; set; }
+
+    private bool isDownloading;
+    private string? downloadError;
 
     private void Submit()
     {
         MudDialog?.Close();
     }
 
-    private void OpenPassport()
+    private async Task OpenEditDialog()
     {
-        // Здесь будет логика открытия паспорта
-        Console.WriteLine($"Открытие паспорта для: {Resource?.Name}");
-        // TODO: Навигация на страницу паспорта или открытие PDF
-        MudDialog?.Close();
+        if (Resource == null || WaterObjectApi == null)
+            return;
+
+        var parameters = new DialogParameters<EditWaterResourceDialog>
+        {
+            { x => x.Resource, Resource },
+            { x => x.WaterObjectApi, WaterObjectApi }
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseButton = true
+        };
+
+        var dialog = await DialogService.ShowAsync<EditWaterResourceDialog>("Редактирование водного ресурса", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled && result.Data is WaterObjectDto updatedResource)
+        {
+            // Update local resource with new data
+            Resource = updatedResource;
+            
+            // Notify parent component about the update
+            if (OnUpdated.HasDelegate)
+            {
+                await OnUpdated.InvokeAsync(updatedResource);
+            }
+            
+            StateHasChanged();
+        }
+    }
+
+    private async Task OpenPassport()
+    {
+        if (Resource == null || WaterObjectApi == null)
+            return;
+            
+        try
+        {
+            isDownloading = true;
+            downloadError = null;
+            StateHasChanged();
+            
+            Console.WriteLine($"Downloading passport for: {Resource.Name} (ID: {Resource.Id})");
+            
+            var result = await WaterObjectApi.GetPassportAsync(Resource.Id);
+            
+            if (result.HasValue)
+            {
+                var (content, contentType, fileName) = result.Value;
+                
+                // Convert to base64 and trigger download via JS
+                var base64 = Convert.ToBase64String(content);
+                
+                await JS.InvokeVoidAsync("downloadFile", fileName, contentType, base64);
+                
+                Console.WriteLine($"Passport downloaded: {fileName}");
+            }
+            else
+            {
+                downloadError = "Не удалось загрузить паспорт. Проверьте подключение к серверу.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error downloading passport: {ex.Message}");
+            downloadError = $"Ошибка загрузки: {ex.Message}";
+        }
+        finally
+        {
+            isDownloading = false;
+            StateHasChanged();
+        }
     }
 
     private string GetResourceTypeText(ResourceType type) => type switch
@@ -99,7 +222,22 @@
     {
         WaterType.Fresh => "Пресная",
         WaterType.NonFresh => "Непресная",
-        WaterType.Mixed => "Смешанная",
         _ => "Неизвестно"
+    };
+    
+    private string GetPriorityText(PriorityLevel level) => level switch
+    {
+        PriorityLevel.High => "Высокий приоритет",
+        PriorityLevel.Medium => "Средний приоритет",
+        PriorityLevel.Low => "Низкий приоритет",
+        _ => "Неизвестно"
+    };
+    
+    private Color GetPriorityColor(PriorityLevel level) => level switch
+    {
+        PriorityLevel.High => Color.Error,
+        PriorityLevel.Medium => Color.Warning,
+        PriorityLevel.Low => Color.Success,
+        _ => Color.Default
     };
 }
