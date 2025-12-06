@@ -32,10 +32,12 @@
                     <!-- Login Field -->
                     <div class="form-group">
                         <label class="form-label">Логин</label>
-                        <InputText @bind-Value="LoginModel.Login" 
-                                   class="form-input" 
-                                   placeholder="Введите ваш логин"
-                                   disabled="@IsLoading" />
+                        <div class="input-wrapper">
+                            <InputText @bind-Value="LoginModel.Login" 
+                                       class="form-input" 
+                                       placeholder="Введите ваш логин"
+                                       disabled="@IsLoading" />
+                        </div>
                         <ValidationMessage For="@(() => LoginModel.Login)" />
                     </div>
 

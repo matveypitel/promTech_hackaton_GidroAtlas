@@ -168,6 +168,15 @@ body {
     background: rgba(17, 24, 39, 0.7);
 }
 
+/* Input Wrapper */
+.input-wrapper {
+    position: relative;
+    display: flex;
+    width: 100%;
+    flex: 1;
+    align-items: stretch;
+}
+
 /* Password Wrapper */
 .password-wrapper {
     position: relative;
