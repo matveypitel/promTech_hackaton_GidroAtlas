@@ -1,6 +1,7 @@
 using GidroAtlas.Shared.DTOs;
 using GidroAtlas.Web.Interfaces;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 
 namespace GidroAtlas.Web.Components.Pages;
 
@@ -17,6 +18,9 @@ public partial class Login : ComponentBase
 
     [Inject]
     private ILogger<Login> Logger { get; set; } = default!;
+
+    [Inject]
+    private IJSRuntime JS { get; set; } = default!;
 
     // Properties for UI state
     protected LoginModel LoginModel { get; set; } = new();
@@ -65,6 +69,11 @@ public partial class Login : ComponentBase
             {
                 Logger.LogInformation("Login successful for user: {Login}, Token length: {TokenLength}",
                     LoginModel.Login, response.Token?.Length ?? 0);
+
+                // Save to LocalStorage
+                await JS.InvokeVoidAsync("localStorage.setItem", "authToken", response.Token);
+                await JS.InvokeVoidAsync("localStorage.setItem", "userRole", response.Role.ToString());
+                await JS.InvokeVoidAsync("localStorage.setItem", "userName", LoginModel.Login);
 
                 SuccessMessage = "Вход выполнен успешно! Перенаправление...";
 

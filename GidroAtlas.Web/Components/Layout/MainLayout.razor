@@ -1,4 +1,8 @@
 ﻿@inherits LayoutComponentBase
+@inject IJSRuntime JS
+@inject NavigationManager NavManager
+@using GidroAtlas.Web.Interfaces
+@inject IAuthApiService AuthService
 
 <MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
 <MudPopoverProvider />
@@ -10,7 +14,20 @@
         <MudText Typo="Typo.h5" Class="ml-3">Application</MudText>
         <MudSpacer />
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
-        <MudIconButton Icon="@Icons.Material.Filled.MoreVert" Color="Color.Inherit" Edge="Edge.End" />
+        
+        <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Class="ml-2">
+            <ActivatorContent>
+                 <MudAvatar Color="Color.Secondary" Size="Size.Medium">@GetInitials()</MudAvatar>
+            </ActivatorContent>
+            <ChildContent>
+                <div class="pa-4 min-w-[150px]">
+                    <MudText Typo="Typo.body1" Class="font-bold">@UserName</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Default" Class="opacity-70">@UserRole</MudText>
+                </div>
+                <MudDivider />
+                <MudMenuItem OnClick="Logout" Icon="@Icons.Material.Filled.Logout">Выйти</MudMenuItem>
+            </ChildContent>
+        </MudMenu>
     </MudAppBar>
     <MudDrawer id="nav-drawer" @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
         <NavMenu />
@@ -98,6 +115,42 @@
         true => Icons.Material.Rounded.AutoMode,
         false => Icons.Material.Outlined.DarkMode,
     };
+
+    private string UserName = "Guest";
+    private string UserRole = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var storedName = await JS.InvokeAsync<string>("localStorage.getItem", "userName");
+                var storedRole = await JS.InvokeAsync<string>("localStorage.getItem", "userRole");
+                if (!string.IsNullOrEmpty(storedName))
+                {
+                    UserName = storedName;
+                    UserRole = storedRole;
+                    StateHasChanged();
+                }
+            }
+            catch { /* ignore */ }
+        }
+    }
+
+    private string GetInitials()
+    {
+        if (string.IsNullOrEmpty(UserName) || UserName == "Guest") return "?";
+        return UserName.Substring(0, 1).ToUpper();
+    }
+
+    private async Task Logout()
+    {
+        await JS.InvokeVoidAsync("localStorage.removeItem", "authToken");
+        await JS.InvokeVoidAsync("localStorage.removeItem", "userRole");
+        await JS.InvokeVoidAsync("localStorage.removeItem", "userName");
+        NavManager.NavigateTo("/", true);
+    }
 }
 
 
