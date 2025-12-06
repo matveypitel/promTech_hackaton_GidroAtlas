@@ -107,6 +107,7 @@ services:
       - Ollama__BaseUrl=http://ollama:11434
       - Ollama__ChatModel=qwen3:4b
       - Ollama__EmbeddingModel=nomic-embed-text
+      - CorsSettings__AllowedOrigins__0=http://web:8080
     volumes:
       - ..:/src
       - /src/GidroAtlas.Api/bin
@@ -133,7 +134,8 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
-      - ApiBaseUrl=http://api:8080
+      - ApiSettings__BaseUrl=http://api:8080/
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=gidroatlas_db;Username=postgres;Password=postgres
     volumes:
       - ..:/src
       - /src/GidroAtlas.Web/bin
