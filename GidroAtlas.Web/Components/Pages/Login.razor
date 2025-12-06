@@ -1,0 +1,98 @@
+@page "/"
+@rendermode InteractiveServer
+
+<PageTitle>Вход в систему - GidroAtlas</PageTitle>
+
+<link rel="stylesheet" href="login.css" />
+
+<div class="login-container">
+    <div class="login-content">
+        <div class="login-card">
+            <!-- Logo Section -->
+            <div class="logo-section">
+                <svg class="logo-icon" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12S7.59 4 12 4C16.41 4 20 7.59 20 12S16.41 20 12 20Z" opacity="0.3"></path>
+                    <path d="M12 6C9.13 6 6.72 8.03 6.14 10.74C6.05 11.19 6.41 11.58 6.85 11.49C7.29 11.4 7.63 11.02 7.74 10.59C8.16 8.82 9.94 7.5 12 7.5C14.06 7.5 15.84 8.82 16.26 10.59C16.37 11.02 16.71 11.4 17.15 11.49C17.59 11.58 17.95 11.19 17.86 10.74C17.28 8.03 14.87 6 12 6Z"></path>
+                    <path d="M12 12.5C9.52 12.5 7.43 14.12 6.7 16.41C6.54 16.89 6.94 17.37 7.43 17.29C7.91 17.2 8.27 16.76 8.44 16.29C8.96 14.82 10.37 14 12 14C13.63 14 15.04 14.82 15.56 16.29C15.73 16.76 16.09 17.2 16.57 17.29C17.06 17.37 17.46 16.89 17.3 16.41C16.57 14.12 14.48 12.5 12 12.5Z"></path>
+                </svg>
+            </div>
+
+            <!-- Hero Section -->
+            <div class="hero-section">
+                <h1 class="hero-title">Вход в систему GidroAtlas</h1>
+                <p class="hero-subtitle">Платформа для мониторинга водных ресурсов и гидротехнических сооружений Казахстана</p>
+            </div>
+
+            <!-- Form Section -->
+            <div class="form-container">
+                <EditForm Model="@LoginModel" OnValidSubmit="@HandleLoginAsync" FormName="loginForm">
+                    <DataAnnotationsValidator />
+                    
+                    <!-- Login Field -->
+                    <div class="form-group">
+                        <label class="form-label">Логин</label>
+                        <InputText @bind-Value="LoginModel.Login" 
+                                   class="form-input" 
+                                   placeholder="Введите ваш логин"
+                                   disabled="@IsLoading" />
+                        <ValidationMessage For="@(() => LoginModel.Login)" />
+                    </div>
+
+                    <!-- Password Field -->
+                    <div class="form-group">
+                        <label class="form-label">Пароль</label>
+                        <div class="password-wrapper">
+                            <InputText @bind-Value="LoginModel.Password" 
+                                       type="@(ShowPassword ? "text" : "password")" 
+                                       class="form-input" 
+                                       placeholder="Введите ваш пароль"
+                                       disabled="@IsLoading" />
+                            <span class="password-toggle" @onclick="TogglePasswordVisibility">
+                                <span class="material-symbols-outlined">@(ShowPassword ? "visibility_off" : "visibility")</span>
+                            </span>
+                        </div>
+                        <ValidationMessage For="@(() => LoginModel.Password)" />
+                    </div>
+
+                    <!-- Login Button -->
+                    <button type="submit" class="btn-primary" disabled="@IsLoading">
+                        @if (IsLoading)
+                        {
+                            <span class="spinner"></span>
+                            <span>Вход...</span>
+                        }
+                        else
+                        {
+                            <span>Войти</span>
+                        }
+                    </button>
+
+                    <!-- Forgot Password Link -->
+                    <p class="forgot-password">
+                        <a href="#" class="link">Забыли пароль?</a>
+                    </p>
+
+                    @if (!string.IsNullOrEmpty(ErrorMessage))
+                    {
+                        <div class="error-message">
+                            @ErrorMessage
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(SuccessMessage))
+                    {
+                        <div class="success-message">
+                            @SuccessMessage
+                        </div>
+                    }
+                </EditForm>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+                <p>© 2025 GidroAtlas. Все права защищены.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
