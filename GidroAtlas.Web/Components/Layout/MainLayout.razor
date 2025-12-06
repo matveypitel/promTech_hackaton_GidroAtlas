@@ -14,13 +14,16 @@
         <MudText Typo="Typo.h5" Class="ml-3">Application</MudText>
         <MudSpacer />
         
-        @* Chat Bot Button *@
-        <MudTooltip Text="AI Помощник" Placement="Placement.Bottom">
-            <MudIconButton Icon="@Icons.Material.Filled.SmartToy" 
-                           Color="Color.Inherit" 
-                           OnClick="@ToggleChatPanel"
-                           Class="@($"chat-toggle-btn {(_isChatOpen ? "active" : "")}")" />
-        </MudTooltip>
+        @* Chat Bot Button - Expert only *@
+        @if (_isExpert)
+        {
+            <MudTooltip Text="AI Помощник" Placement="Placement.Bottom">
+                <MudIconButton Icon="@Icons.Material.Filled.SmartToy" 
+                               Color="Color.Inherit" 
+                               OnClick="@ToggleChatPanel"
+                               Class="@($"chat-toggle-btn {(_isChatOpen ? "active" : "")}")" />
+            </MudTooltip>
+        }
         
         <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
         
@@ -46,11 +49,12 @@
     </MudMainContent>
 </MudLayout>
 
-@* Chat Panel Overlay *@
-<div class="@($"chat-overlay {(_isChatOpen ? "visible" : "")}")" @onclick="CloseChatPanel"></div>
-
-@* Chat Panel *@
-<ChatPanel IsOpen="@_isChatOpen" OnClose="CloseChatPanel" />
+@* Chat Panel Overlay - Expert only *@
+@if (_isExpert)
+{
+    <div class="@($"chat-overlay {(_isChatOpen ? "visible" : "")}")" @onclick="CloseChatPanel"></div>
+    <ChatPanel IsOpen="@_isChatOpen" OnClose="CloseChatPanel" />
+}
 
 
 <div id="blazor-error-ui" data-nosnippet>
@@ -63,6 +67,7 @@
     private bool _drawerOpen = true;
     private bool _isDarkMode = true;
     private bool _isChatOpen = false;
+    private bool _isExpert = false;
     private MudTheme? _theme = null;
 
     protected override void OnInitialized()
@@ -143,6 +148,7 @@
             {
                 var storedName = await JS.InvokeAsync<string>("localStorage.getItem", "userName");
                 var storedRole = await JS.InvokeAsync<string>("localStorage.getItem", "userRole");
+                _isExpert = storedRole == "Expert";
                 if (!string.IsNullOrEmpty(storedName))
                 {
                     UserName = storedName;

@@ -46,11 +46,14 @@
                     <MudText Typo="Typo.body1">@Resource.PassportDate.ToString("dd.MM.yyyy")</MudText>
                 </div>
 
-                <div>
-                    <MudText Typo="Typo.subtitle2" Color="Color.Primary">Техническое состояние</MudText>
-                    <MudRating ReadOnly="true" SelectedValue="Resource.TechnicalCondition" MaxValue="5" />
-                    <MudText Typo="Typo.caption">@Resource.TechnicalCondition из 5</MudText>
-                </div>
+                @if (IsExpert)
+                {
+                    <div>
+                        <MudText Typo="Typo.subtitle2" Color="Color.Primary">Техническое состояние</MudText>
+                        <MudRating ReadOnly="true" SelectedValue="Resource.TechnicalCondition" MaxValue="5" />
+                        <MudText Typo="Typo.caption">@Resource.TechnicalCondition из 5</MudText>
+                    </div>
+                }
 
                 <div>
                     <MudText Typo="Typo.subtitle2" Color="Color.Primary">Координаты</MudText>
@@ -59,7 +62,7 @@
                     </MudText>
                 </div>
                 
-                @if (IsExpert && Resource.PriorityLevel != PriorityLevel.Low)
+                @if (IsExpert)
                 {
                     <div>
                         <MudText Typo="Typo.subtitle2" Color="Color.Primary">Приоритет</MudText>
