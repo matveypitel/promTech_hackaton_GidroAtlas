@@ -191,4 +191,25 @@ public class WaterObjectApiService : IWaterObjectApiService
             return null;
         }
     }
+
+    public async Task<ObjectPriorityDto?> GetObjectPriorityAsync(Guid id)
+    {
+        try
+        {
+            var response = await _httpClient.GetAsync($"api/waterobjects/{id}/priority");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<ObjectPriorityDto>();
+            }
+            
+            _logger.LogWarning("GetObjectPriority failed with status code: {StatusCode}", response.StatusCode);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error getting object priority for id: {Id}", id);
+            return null;
+        }
+    }
 }

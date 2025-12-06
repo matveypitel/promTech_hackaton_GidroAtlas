@@ -71,4 +71,10 @@ public class WaterObjectDto
     /// priority level classification (High, Medium, Low).
     /// </summary>
     public PriorityLevel PriorityLevel { get; set; }
+
+    /// <summary>
+    /// ML-predicted probability that object requires attention (0.0 - 1.0).
+    /// Null if ML model is not available.
+    /// </summary>
+    public double? AttentionProbability { get; set; }
 }

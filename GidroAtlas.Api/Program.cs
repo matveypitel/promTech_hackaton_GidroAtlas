@@ -1,7 +1,9 @@
 using GidroAtlas.Api.Abstractions;
 using GidroAtlas.Api.Handlers;
 using GidroAtlas.Api.Infrastructure.Auth;
+using GidroAtlas.Api.Infrastructure.Chat;
 using GidroAtlas.Api.Infrastructure.Database;
+using GidroAtlas.Api.Infrastructure.ML;
 using GidroAtlas.Api.Options;
 using GidroAtlas.Api.Services;
 using GidroAtlas.Shared.Constants;
@@ -19,7 +21,9 @@ builder.Services.AddProblemDetails();
 
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString(AppConstants.ConnectionStringName)));
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString(AppConstants.ConnectionStringName),
+        npgsqlOptions => npgsqlOptions.UseVector()));
 
 // JWT configuration
 var jwtSettings = builder.Configuration.GetSection(AppConstants.Jwt.SectionName);
@@ -52,6 +56,18 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IWaterObjectService, WaterObjectService>();
+builder.Services.AddSingleton<PredictionService>();
+
+// Ollama configuration for RAG chat
+var ollamaSettings = builder.Configuration.GetSection("Ollama");
+builder.Services.Configure<OllamaSettings>(ollamaSettings);
+
+// Register HttpClient for Ollama services
+builder.Services.AddHttpClient<IEmbeddingService, OllamaEmbeddingService>();
+builder.Services.AddHttpClient<IChatService, ChatService>();
+
+// Background service for auto-indexing water objects
+builder.Services.AddHostedService<IndexingBackgroundService>();
 
 // Register authorization handlers
 builder.Services.AddSingleton<IAuthorizationHandler, GuestAuthorizationHandler>();
