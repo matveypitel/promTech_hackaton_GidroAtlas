@@ -61,24 +61,47 @@
                         <div class="text-text-secondary-dark flex bg-interactive-dark items-center justify-center pl-4 rounded-l-lg">
                             <span class="material-symbols-outlined">search</span>
                         </div>
-                        <input @bind="searchText" @bind:event="oninput" @onkeyup="SearchData" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-lg text-white focus:outline-0 focus:ring-2 focus:ring-primary focus:ring-inset border-none bg-interactive-dark h-full placeholder:text-text-secondary-dark px-4 text-base font-normal leading-normal" placeholder="Поиск по названию объекта"/>
+                        <input @bind="searchText" @bind:event="oninput" @onkeyup="SearchData" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-lg text-black focus:outline-0 focus:ring-2 focus:ring-primary focus:ring-inset border-none bg-interactive-dark h-full placeholder:text-text-secondary-dark px-4 text-base font-normal leading-normal" placeholder="Поиск по названию объекта"/>
                     </div>
                 </label>
             </div>
             <!-- Filters -->
             <div class="flex gap-3 overflow-x-auto">
-                <button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-interactive-dark pl-4 pr-2 hover:bg-interactive-dark/80 transition-colors">
-                    <p class="text-white text-sm font-medium leading-normal">Область</p>
-                    <span class="material-symbols-outlined text-white text-base">expand_more</span>
-                </button>
-                <button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-interactive-dark pl-4 pr-2 hover:bg-interactive-dark/80 transition-colors">
-                    <p class="text-white text-sm font-medium leading-normal">Состояние</p>
-                    <span class="material-symbols-outlined text-white text-base">expand_more</span>
-                </button>
-                <button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-interactive-dark pl-4 pr-2 hover:bg-interactive-dark/80 transition-colors">
-                    <p class="text-white text-sm font-medium leading-normal">Приоритет</p>
-                    <span class="material-symbols-outlined text-white text-base">expand_more</span>
-                </button>
+                <!-- Region Filter -->
+                <div class="relative">
+                    <select @bind="selectedRegion" @bind:after="LoadData" class="appearance-none h-10 w-full min-w-[120px] bg-interactive-dark text-white rounded-lg pl-4 pr-10 hover:bg-interactive-dark/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                        <option value="">Все области</option>
+                        @foreach (var region in availableRegions)
+                        {
+                            <option value="@region">@region</option>
+                        }
+                    </select>
+                    <span class="material-symbols-outlined text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">expand_more</span>
+                </div>
+
+                <!-- Condition Filter -->
+                <div class="relative">
+                    <select @bind="selectedCondition" @bind:after="LoadData" class="appearance-none h-10 w-full min-w-[140px] bg-interactive-dark text-white rounded-lg pl-4 pr-10 hover:bg-interactive-dark/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                        <option value="">Все состояния</option>
+                        <option value="5">Отличное (5)</option>
+                        <option value="4">Хорошее (4)</option>
+                        <option value="3">Удовлетворительное (3)</option>
+                        <option value="2">Плохое (2)</option>
+                        <option value="1">Аварийное (1)</option>
+                    </select>
+                    <span class="material-symbols-outlined text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">expand_more</span>
+                </div>
+
+                <!-- Priority Filter -->
+                <div class="relative">
+                    <select @bind="selectedPriority" @bind:after="LoadData" class="appearance-none h-10 w-full min-w-[130px] bg-interactive-dark text-white rounded-lg pl-4 pr-10 hover:bg-interactive-dark/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                        <option value="">Все приоритеты</option>
+                        <option value="2">Высокий</option>
+                        <option value="1">Средний</option>
+                        <option value="0">Низкий</option>
+                    </select>
+                    <span class="material-symbols-outlined text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">expand_more</span>
+                </div>
             </div>
             <button @onclick="LoadData" class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-primary/20 text-primary px-4 hover:bg-primary/30 transition-colors">
                 <p class="text-sm font-medium">Обновить</p>
@@ -174,10 +197,32 @@
     private int currentPage = 1;
     private string searchText = "";
     private string? loadError;
+    // Filters
+    private List<string> availableRegions = new();
+    private string selectedRegion = "";
+    private string selectedCondition = ""; // Parse to int?
+    private string selectedPriority = ""; // Parse to int?
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadRegions();
         await LoadData();
+    }
+
+    private async Task LoadRegions()
+    {
+        try 
+        {
+            availableRegions = await DbContext.WaterObjects
+                .Select(x => x.Region)
+                .Distinct()
+                .OrderBy(x => x)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+             Console.WriteLine($"Error loading regions: {ex.Message}");
+        }
     }
 
     private async Task LoadData()
@@ -189,6 +234,21 @@
             if (!string.IsNullOrWhiteSpace(searchText))
             {
                 query = query.Where(w => w.Name.ToLower().Contains(searchText.ToLower()));
+            }
+
+            if (!string.IsNullOrWhiteSpace(selectedRegion))
+            {
+                query = query.Where(w => w.Region == selectedRegion);
+            }
+
+            if (!string.IsNullOrWhiteSpace(selectedCondition) && int.TryParse(selectedCondition, out int cond))
+            {
+                query = query.Where(w => w.TechnicalCondition == cond);
+            }
+
+            if (!string.IsNullOrWhiteSpace(selectedPriority) && int.TryParse(selectedPriority, out int priority))
+            {
+                query = query.Where(w => w.Priority == priority);
             }
 
             totalCount = await query.CountAsync();
