@@ -14,6 +14,7 @@
     <PackageReference Include="BlazorLeafletInterop" />
     <PackageReference Include="MudBlazor" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Pgvector.EntityFrameworkCore" />
   </ItemGroup>
 
   <ItemGroup>

@@ -12,6 +12,11 @@
 <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
     <MudText Typo="Typo.h4" Class="mb-4">Карта водных ресурсов Казахстана</MudText>
 
+    @if (loadError != null)
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4">Ошибка загрузки данных: @loadError</MudAlert>
+    }
+
     <MudPaper Elevation="3" Class="pa-4">
         <div id="map" style="height:600px; width:100%; border-radius: 8px;"></div>
     </MudPaper>
@@ -22,6 +27,7 @@
 
     // Список водных ресурсов
     private List<WaterResource> waterResources = new();
+    private string? loadError;
 
     protected override async Task OnInitializedAsync()
     {
@@ -44,6 +50,7 @@
         }
         catch (Exception ex)
         {
+            loadError = ex.Message + (ex.InnerException != null ? $" Inner: {ex.InnerException.Message}" : "");
             Console.WriteLine($"Error loading map data: {ex.Message}");
         }
     }

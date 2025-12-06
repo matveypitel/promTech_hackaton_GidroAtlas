@@ -14,7 +14,7 @@ builder.Services.AddRazorComponents()
 // Configure DbContext
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(connectionString, x => x.UseVector()));
 
 // Configure API base URL
 var apiBaseUrl = builder.Configuration["ApiSettings:BaseUrl"]

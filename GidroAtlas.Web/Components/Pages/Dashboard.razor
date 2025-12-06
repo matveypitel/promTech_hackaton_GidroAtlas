@@ -111,7 +111,14 @@
                     <tbody>
                         @if (waterObjects == null)
                         {
-                            <tr><td colspan="5" class="px-4 py-8 text-white text-center">Загрузка данных...</td></tr>
+                            if (loadError != null)
+                            {
+                                <tr><td colspan="5" class="px-4 py-8 text-white text-center text-red-500">Ошибка загрузки: @loadError</td></tr>
+                            }
+                            else
+                            {
+                                <tr><td colspan="5" class="px-4 py-8 text-white text-center">Загрузка данных...</td></tr>
+                            }
                         }
                         else if (!waterObjects.Any())
                         {
@@ -166,6 +173,7 @@
     private int totalCount;
     private int currentPage = 1;
     private string searchText = "";
+    private string? loadError;
 
     protected override async Task OnInitializedAsync()
     {
@@ -210,7 +218,9 @@
         }
         catch (Exception ex)
         {
+            loadError = ex.Message + (ex.InnerException != null ? $" Inner: {ex.InnerException.Message}" : "");
             Console.WriteLine($"Error loading dashboard data: {ex.Message}");
+            StateHasChanged();
         }
     }
 
