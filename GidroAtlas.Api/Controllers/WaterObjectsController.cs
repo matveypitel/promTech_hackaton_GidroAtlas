@@ -220,6 +220,7 @@ public class WaterObjectsController : ControllerBase
 
     /// <summary>
     /// Updates a water object by ID (Expert only)
+    /// Priority is automatically recalculated based on the updated values.
     /// </summary>
     /// <param name="id">Water object ID</param>
     /// <param name="updateDto">Updated water object data</param>
@@ -241,7 +242,56 @@ public class WaterObjectsController : ControllerBase
             return NotFound(new { message = AppConstants.ErrorMessages.WaterObjectNotFound });
         }
 
-        _logger.LogInformation("Water object {Id} updated successfully", id);
+        _logger.LogInformation("Water object {Id} updated successfully. Priority auto-calculated: {Priority}", id, result.Priority);
         return Ok(result);
     }
+
+    /// <summary>
+    /// Creates a new water object (Expert only)
+    /// Priority is automatically calculated based on technical condition and passport date.
+    /// </summary>
+    /// <param name="createDto">Water object data to create</param>
+    /// <returns>Created water object</returns>
+    [HttpPost]
+    [Authorize(Policy = AuthPolicies.ExpertOnly)]
+    [ProducesResponseType(typeof(WaterObjectDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<WaterObjectDto>> Create([FromBody] CreateWaterObjectDto createDto)
+    {
+        _logger.LogInformation("Creating new water object: {Name}", createDto.Name);
+        
+        var result = await _waterObjectService.CreateAsync(createDto);
+        
+        _logger.LogInformation("Water object {Id} created successfully. Priority auto-calculated: {Priority}", result.Id, result.Priority);
+        return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
+    }
+
+    /// <summary>
+    /// Deletes a water object by ID (Expert only)
+    /// </summary>
+    /// <param name="id">Water object ID</param>
+    /// <returns>No content if successful</returns>
+    [HttpDelete("{id:guid}")]
+    [Authorize(Policy = AuthPolicies.ExpertOnly)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> Delete(Guid id)
+    {
+        _logger.LogInformation("Deleting water object {Id}", id);
+        
+        var result = await _waterObjectService.DeleteAsync(id);
+        
+        if (!result)
+        {
+            return NotFound(new { message = AppConstants.ErrorMessages.WaterObjectNotFound });
+        }
+
+        _logger.LogInformation("Water object {Id} deleted successfully", id);
+        return NoContent();
+    }
 }
+

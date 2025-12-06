@@ -48,9 +48,25 @@ public interface IWaterObjectApiService : IApiClient
     
     /// <summary>
     /// Updates an existing water object (requires Expert role)
+    /// Priority is automatically recalculated by the server.
     /// </summary>
     /// <param name="id">Water object ID</param>
     /// <param name="updateDto">Updated water object data</param>
     /// <returns>Updated water object DTO, or null if not found</returns>
     Task<WaterObjectDto?> UpdateAsync(Guid id, UpdateWaterObjectDto updateDto);
+
+    /// <summary>
+    /// Creates a new water object (requires Expert role)
+    /// Priority is automatically calculated by the server.
+    /// </summary>
+    /// <param name="createDto">Water object data to create</param>
+    /// <returns>Created water object DTO, or null if failed</returns>
+    Task<WaterObjectDto?> CreateAsync(CreateWaterObjectDto createDto);
+
+    /// <summary>
+    /// Deletes a water object (requires Expert role)
+    /// </summary>
+    /// <param name="id">Water object ID</param>
+    /// <returns>True if deleted successfully, false otherwise</returns>
+    Task<bool> DeleteAsync(Guid id);
 }

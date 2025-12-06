@@ -113,19 +113,58 @@ public class WaterObjectService : IWaterObjectService
         return (PriorityConstants.TechnicalConditionBase - technicalCondition) * PriorityConstants.TechnicalConditionMultiplier + passportAgeYears;
     }
 
+    /// <summary>
+    /// Calculates priority (1-5) using ML model's attention probability.
+    /// 5 = highest priority (needs attention), 1 = lowest priority.
+    /// If ML model is unavailable, falls back to formula-based calculation.
+    /// </summary>
+    public int CalculateMlPriority(WaterObject entity)
+    {
+        var attentionProbability = _predictionService.GetAttentionProbability(entity);
+        
+        if (attentionProbability.HasValue)
+        {
+            // Convert probability (0.0-1.0) to priority (1-5)
+            // Higher probability = higher priority (needs more attention)
+            // 0.0-0.2 -> 1, 0.2-0.4 -> 2, 0.4-0.6 -> 3, 0.6-0.8 -> 4, 0.8-1.0 -> 5
+            // Formula: priority = floor(probability * 5) + 1, clamped to 1-5
+            var priority = (int)Math.Floor(attentionProbability.Value * 5) + 1;
+            return Math.Clamp(priority, 1, 5);
+        }
+        
+        // Fallback: convert old formula-based priority to 1-5 scale
+        var oldPriority = CalculatePriority(entity.TechnicalCondition, entity.PassportDate);
+        return ConvertOldPriorityToNewScale(oldPriority);
+    }
+
+    /// <summary>
+    /// Converts old priority score to new 1-5 scale.
+    /// </summary>
+    private static int ConvertOldPriorityToNewScale(int oldPriority)
+    {
+        return oldPriority switch
+        {
+            >= PriorityConstants.HighPriorityThreshold => 5,
+            >= PriorityConstants.MediumPriorityThreshold => 3,
+            _ => 1
+        };
+    }
+
     public PriorityLevel GetPriorityLevel(int priority)
     {
+        // Now priority is 1-5 scale (ML-based)
         return priority switch
         {
-            >= PriorityConstants.HighPriorityThreshold => PriorityLevel.High,
-            >= PriorityConstants.MediumPriorityThreshold => PriorityLevel.Medium,
-            _ => PriorityLevel.Low
+            >= 4 => PriorityLevel.High,    // 4-5
+            >= 2 => PriorityLevel.Medium,  // 2-3
+            _ => PriorityLevel.Low         // 1
         };
     }
 
     private WaterObjectDto MapToDto(WaterObject entity)
     {
-        var priority = CalculatePriority(entity.TechnicalCondition, entity.PassportDate);
+        // Use ML-based priority (1-5 scale)
+        var priority = CalculateMlPriority(entity);
         var attentionProbability = _predictionService.GetAttentionProbability(entity);
         
         return new WaterObjectDto
@@ -152,7 +191,8 @@ public class WaterObjectService : IWaterObjectService
         var entity = await _context.WaterObjects.FindAsync(id);
         if (entity == null) return null;
 
-        var priority = CalculatePriority(entity.TechnicalCondition, entity.PassportDate);
+        // Use ML-based priority (1-5 scale)
+        var priority = CalculateMlPriority(entity);
         var passportAgeYears = (DateTime.UtcNow - entity.PassportDate).Days / 365;
         var attentionProbability = _predictionService.GetAttentionProbability(entity);
 
@@ -188,8 +228,8 @@ public class WaterObjectService : IWaterObjectService
         entity.Latitude = updateDto.Latitude;
         entity.Longitude = updateDto.Longitude;
 
-        // Recalculate priority based on new values
-        entity.Priority = CalculatePriority(entity.TechnicalCondition, entity.PassportDate);
+        // Recalculate priority using ML model (1-5 scale)
+        entity.Priority = CalculateMlPriority(entity);
 
         await _context.SaveChangesAsync();
 
@@ -211,4 +251,48 @@ public class WaterObjectService : IWaterObjectService
             _ => query.OrderBy(w => w.Name)
         };
     }
+
+    public async Task<WaterObjectDto> CreateAsync(CreateWaterObjectDto createDto)
+    {
+        var passportDate = createDto.PassportDate.Kind == DateTimeKind.Utc 
+            ? createDto.PassportDate 
+            : DateTime.SpecifyKind(createDto.PassportDate, DateTimeKind.Utc);
+
+        // Create entity first (needed for ML prediction)
+        var entity = new WaterObject
+        {
+            Id = Guid.NewGuid(),
+            Name = createDto.Name,
+            Region = createDto.Region,
+            ResourceType = createDto.ResourceType,
+            WaterType = createDto.WaterType,
+            HasFauna = createDto.HasFauna,
+            PassportDate = passportDate,
+            TechnicalCondition = createDto.TechnicalCondition,
+            Latitude = createDto.Latitude,
+            Longitude = createDto.Longitude,
+            PdfUrl = createDto.PdfUrl,
+            Priority = 1 // Temporary, will be calculated below
+        };
+
+        // Calculate priority using ML model (1-5 scale) - cannot be set manually
+        entity.Priority = CalculateMlPriority(entity);
+
+        _context.WaterObjects.Add(entity);
+        await _context.SaveChangesAsync();
+
+        return MapToDto(entity);
+    }
+
+    public async Task<bool> DeleteAsync(Guid id)
+    {
+        var entity = await _context.WaterObjects.FindAsync(id);
+        if (entity == null) return false;
+
+        _context.WaterObjects.Remove(entity);
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
 }
+

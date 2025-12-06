@@ -1,3 +1,4 @@
+using GidroAtlas.Api.Entities;
 using GidroAtlas.Shared.DTOs;
 using GidroAtlas.Shared.Enums;
 
@@ -37,11 +38,20 @@ public interface IWaterObjectService
     int CalculatePriority(int technicalCondition, DateTime passportDate);
 
     /// <summary>
-    /// Determines the priority level based on the priority score.
+    /// Determines the priority level based on the priority score (1-5).
     /// </summary>
-    /// <param name="priority">The priority score.</param>
+    /// <param name="priority">The priority score (1-5).</param>
     /// <returns>The priority level (High, Medium, Low).</returns>
     PriorityLevel GetPriorityLevel(int priority);
+
+    /// <summary>
+    /// Calculates priority (1-5) using ML model's attention probability.
+    /// 5 = highest priority (needs attention), 1 = lowest priority.
+    /// If ML model is unavailable, falls back to formula-based calculation.
+    /// </summary>
+    /// <param name="entity">The water object entity.</param>
+    /// <returns>Priority score from 1 to 5.</returns>
+    int CalculateMlPriority(WaterObject entity);
 
     /// <summary>
     /// Gets detailed priority information for a specific water object.
@@ -53,9 +63,25 @@ public interface IWaterObjectService
 
     /// <summary>
     /// Updates an existing water object by its unique identifier.
+    /// Priority is automatically recalculated based on the new values.
     /// </summary>
     /// <param name="id">The unique identifier of the water object.</param>
     /// <param name="updateDto">The updated water object data.</param>
     /// <returns>The updated water object DTO if found; otherwise, null.</returns>
     Task<WaterObjectDto?> UpdateAsync(Guid id, UpdateWaterObjectDto updateDto);
+
+    /// <summary>
+    /// Creates a new water object.
+    /// Priority is automatically calculated based on technical condition and passport date.
+    /// </summary>
+    /// <param name="createDto">The data for creating the water object.</param>
+    /// <returns>The created water object DTO.</returns>
+    Task<WaterObjectDto> CreateAsync(CreateWaterObjectDto createDto);
+
+    /// <summary>
+    /// Deletes a water object by its unique identifier.
+    /// </summary>
+    /// <param name="id">The unique identifier of the water object.</param>
+    /// <returns>True if the water object was deleted; otherwise, false.</returns>
+    Task<bool> DeleteAsync(Guid id);
 }

@@ -273,4 +273,47 @@ public class WaterObjectApiService : IWaterObjectApiService
             return null;
         }
     }
+
+    public async Task<WaterObjectDto?> CreateAsync(CreateWaterObjectDto createDto)
+    {
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/waterobjects", createDto, _jsonOptions);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<WaterObjectDto>(_jsonOptions);
+            }
+            
+            _logger.LogWarning("Create failed with status code: {StatusCode}", response.StatusCode);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating water object: {Name}", createDto.Name);
+            return null;
+        }
+    }
+
+    public async Task<bool> DeleteAsync(Guid id)
+    {
+        try
+        {
+            var response = await _httpClient.DeleteAsync($"api/waterobjects/{id}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                return true;
+            }
+            
+            _logger.LogWarning("Delete failed with status code: {StatusCode}", response.StatusCode);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting water object id: {Id}", id);
+            return false;
+        }
+    }
 }
+
