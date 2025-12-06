@@ -10,4 +10,8 @@
     <ProjectReference Include="..\GidroAtlas.Shared\GidroAtlas.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="MudBlazor" />
+  </ItemGroup>
+
 </Project>
