@@ -259,6 +259,93 @@
                 </button>
             </div>
         </div>
+
+        <!-- ML Priority Note -->
+        <div class="mt-4 p-4 rounded-lg bg-primary/10 border border-primary/30">
+            <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-primary mt-0.5">smart_toy</span>
+                <div>
+                    <p class="text-white text-sm font-medium mb-1">Приоритет обследования рассчитывается автоматически</p>
+                    <p class="text-text-secondary-dark text-xs">
+                        Система использует ML-модель для анализа технического состояния и возраста паспорта объекта. 
+                        Приоритет не может быть изменён вручную — он пересчитывается при каждом обновлении данных объекта.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formula Info -->
+        <div class="mt-3 p-4 rounded-lg bg-interactive-dark border border-border-dark">
+            <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-text-secondary-dark mt-0.5">info</span>
+                <div class="w-full">
+                    <p class="text-white text-sm font-medium mb-3">Формула расчёта приоритета (ML-модель)</p>
+                    
+                    <!-- Step 1: ML Input -->
+                    <div class="mb-4">
+                        <p class="text-text-secondary-dark text-xs mb-2 flex items-center gap-1">
+                            <span class="inline-flex items-center justify-center size-5 rounded-full bg-primary/20 text-primary text-xs font-bold">1</span>
+                            Входные данные для ML-модели:
+                        </p>
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
+                            <div class="bg-background-dark rounded p-2">
+                                <span class="text-text-secondary-dark">Техн. состояние</span>
+                                <p class="text-white font-mono">от 1 до 5</p>
+                            </div>
+                            <div class="bg-background-dark rounded p-2">
+                                <span class="text-text-secondary-dark">Возраст паспорта</span>
+                                <p class="text-white font-mono">Кол-во лет</p>
+                            </div>
+                            <div class="bg-background-dark rounded p-2">
+                                <span class="text-text-secondary-dark">Тип ресурса</span>
+                                <p class="text-white font-mono">Озеро/Водохранилище/Канал</p>
+                            </div>
+                            <div class="bg-background-dark rounded p-2">
+                                <span class="text-text-secondary-dark">Тип воды</span>
+                                <p class="text-white font-mono">Пресная/Непресная</p>
+                            </div>
+                            <div class="bg-background-dark rounded p-2">
+                                <span class="text-text-secondary-dark">Наличие фауны</span>
+                                <p class="text-white font-mono">Да/Нет</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: ML Output -->
+                    <div class="mb-4">
+                        <p class="text-text-secondary-dark text-xs mb-2 flex items-center gap-1">
+                            <span class="inline-flex items-center justify-center size-5 rounded-full bg-primary/20 text-primary text-xs font-bold">2</span>
+                            ML-модель возвращает вероятность:
+                        </p>
+                        <div class="bg-background-dark rounded-lg p-3">
+                            <p class="text-text-secondary-dark text-xs mt-1">Результат: значение от 0.0 до 1.0</p>
+                        </div>
+                    </div>
+
+                    <!-- Result mapping -->
+                    <div>
+                        <p class="text-text-secondary-dark text-xs mb-2 flex items-center gap-1">
+                            <span class="inline-flex items-center justify-center size-5 rounded-full bg-primary/20 text-primary text-xs font-bold">4</span>
+                            Маппинг в уровни приоритета:
+                        </p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-low-priority/20 text-low-priority">
+                                <span class="size-2 rounded-full bg-low-priority"></span> 
+                                Prob 0.0–0.2 → <strong>1</strong> Низкий
+                            </span>
+                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-medium-priority/20 text-medium-priority">
+                                <span class="size-2 rounded-full bg-medium-priority"></span> 
+                                Prob 0.2–0.6 → <strong>2-3</strong> Средний
+                            </span>
+                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-high-priority/20 text-high-priority">
+                                <span class="size-2 rounded-full bg-high-priority"></span> 
+                                Prob 0.6–1.0 → <strong>4-5</strong> Высокий
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

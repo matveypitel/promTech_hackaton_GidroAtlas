@@ -20,6 +20,37 @@
     <MudPaper Elevation="3" Class="pa-4">
         <div id="map" style="height:600px; width:100%; border-radius: 8px;"></div>
     </MudPaper>
+
+    @* Легенда карты *@
+    <MudPaper Elevation="2" Class="pa-4 mt-4">
+        <MudText Typo="Typo.h6" Class="mb-3">
+            <MudIcon Icon="@Icons.Material.Filled.Info" Class="mr-2" Size="Size.Small"/>
+            Легенда карты — Техническое состояние объекта
+        </MudText>
+        
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="flex-wrap">
+            <MudChip T="string" Style="background-color: #4CAF50; color: white;" Size="Size.Small">
+                <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small" Class="mr-1"/>
+                1 - Отличное
+            </MudChip>
+            <MudChip T="string" Style="background-color: #8BC34A; color: white;" Size="Size.Small">
+                <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small" Class="mr-1"/>
+                2 - Хорошее
+            </MudChip>
+            <MudChip T="string" Style="background-color: #FFEB3B; color: black;" Size="Size.Small">
+                <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small" Class="mr-1"/>
+                3 - Удовлетворительное
+            </MudChip>
+            <MudChip T="string" Style="background-color: #FF9800; color: white;" Size="Size.Small">
+                <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small" Class="mr-1"/>
+                4 - Неудовлетворительное
+            </MudChip>
+            <MudChip T="string" Style="background-color: #F44336; color: white;" Size="Size.Small">
+                <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small" Class="mr-1"/>
+                5 - Критическое
+            </MudChip>
+        </MudStack>
+    </MudPaper>
 </MudContainer>
 
 @code {
