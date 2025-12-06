@@ -1,7 +1,6 @@
 using GidroAtlas.Shared.DTOs;
 using GidroAtlas.Web.Interfaces;
 using Microsoft.AspNetCore.Components;
-using System.ComponentModel.DataAnnotations;
 
 namespace GidroAtlas.Web.Components.Pages;
 
@@ -64,21 +63,21 @@ public partial class Login : ComponentBase
 
             if (response != null)
             {
-                Logger.LogInformation("Login successful for user: {Login}, Token length: {TokenLength}", 
+                Logger.LogInformation("Login successful for user: {Login}, Token length: {TokenLength}",
                     LoginModel.Login, response.Token?.Length ?? 0);
-                
+
                 SuccessMessage = "Вход выполнен успешно! Перенаправление...";
-                
+
                 Logger.LogInformation("Setting success message and waiting 1 second...");
-                
+
                 // Wait a moment to show success message
                 await Task.Delay(1000);
-                
+
                 Logger.LogInformation("Navigating to /dashboard...");
-                
+
                 // Navigate to dashboard or home page
-                NavigationManager.NavigateTo("/dashboard", forceLoad: true);
-                
+                NavigationManager.NavigateTo("/map", forceLoad: true);
+
                 Logger.LogInformation("Navigation completed");
             }
             else
@@ -94,14 +93,14 @@ public partial class Login : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Unexpected error during login for user: {Login}. Type: {Type}", 
+            Logger.LogError(ex, "Unexpected error during login for user: {Login}. Type: {Type}",
                 LoginModel.Login, ex.GetType().Name);
             ErrorMessage = "Произошла непредвиденная ошибка. Попробуйте позже.";
         }
         finally
         {
             IsLoading = false;
-            Logger.LogInformation("=== HandleLoginAsync END === IsLoading: {IsLoading}, ErrorMessage: {ErrorMessage}", 
+            Logger.LogInformation("=== HandleLoginAsync END === IsLoading: {IsLoading}, ErrorMessage: {ErrorMessage}",
                 IsLoading, ErrorMessage);
         }
     }

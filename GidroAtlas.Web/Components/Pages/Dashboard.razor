@@ -1,0 +1,255 @@
+@page "/dashboard"
+@using GidroAtlas.Shared.DTOs
+@using GidroAtlas.Shared.Enums
+@using GidroAtlas.Api.Entities
+@using GidroAtlas.Api.Infrastructure.Database
+@using Microsoft.EntityFrameworkCore
+@inject ApplicationDbContext DbContext
+
+<PageTitle>Дашборд приоритезации</PageTitle>
+
+<!-- Tailwind CDN and Config -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+    darkMode: "class",
+    theme: {
+        extend: {
+        colors: {
+            "primary": "#137fec",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101922",
+            "high-priority": "#D32F2F",
+            "medium-priority": "#FFA000",
+            "low-priority": "#388E3C",
+            "surface-dark": "#192633",
+            "border-dark": "#324d67",
+            "text-secondary-dark": "#92adc9",
+            "interactive-dark": "#233648"
+        },
+        fontFamily: {
+            "display": ["Inter", "sans-serif"]
+        },
+        borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+        },
+    },
+    }
+</script>
+<style>
+    .dashboard-body {
+        font-family: 'Inter', sans-serif;
+    }
+    .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24
+    }
+</style>
+
+<!-- Content Wrapper -->
+<div class="dashboard-body bg-background-light dark:bg-background-dark font-display p-8">
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-6">
+            <p class="text-white text-4xl font-black leading-tight tracking-[-0.033em]">Дашборд приоритезации</p>
+        </header>
+
+        <div class="flex flex-col md:flex-row gap-4 items-center mb-6">
+            <!-- SearchBar -->
+            <div class="flex-grow w-full md:w-auto">
+                <label class="flex flex-col min-w-40 h-12 w-full">
+                    <div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+                        <div class="text-text-secondary-dark flex bg-interactive-dark items-center justify-center pl-4 rounded-l-lg">
+                            <span class="material-symbols-outlined">search</span>
+                        </div>
+                        <input @bind="searchText" @bind:event="oninput" @onkeyup="SearchData" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-lg text-white focus:outline-0 focus:ring-2 focus:ring-primary focus:ring-inset border-none bg-interactive-dark h-full placeholder:text-text-secondary-dark px-4 text-base font-normal leading-normal" placeholder="Поиск по названию объекта"/>
+                    </div>
+                </label>
+            </div>
+            <!-- Filters -->
+            <div class="flex gap-3 overflow-x-auto">
+                <button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-interactive-dark pl-4 pr-2 hover:bg-interactive-dark/80 transition-colors">
+                    <p class="text-white text-sm font-medium leading-normal">Область</p>
+                    <span class="material-symbols-outlined text-white text-base">expand_more</span>
+                </button>
+                <button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-interactive-dark pl-4 pr-2 hover:bg-interactive-dark/80 transition-colors">
+                    <p class="text-white text-sm font-medium leading-normal">Состояние</p>
+                    <span class="material-symbols-outlined text-white text-base">expand_more</span>
+                </button>
+                <button class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-interactive-dark pl-4 pr-2 hover:bg-interactive-dark/80 transition-colors">
+                    <p class="text-white text-sm font-medium leading-normal">Приоритет</p>
+                    <span class="material-symbols-outlined text-white text-base">expand_more</span>
+                </button>
+            </div>
+            <button @onclick="LoadData" class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-primary/20 text-primary px-4 hover:bg-primary/30 transition-colors">
+                <p class="text-sm font-medium">Обновить</p>
+            </button>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-hidden rounded-lg border border-border-dark bg-surface-dark">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-surface-dark">
+                        <tr class="border-b border-border-dark">
+                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal w-2/5">
+                                <div class="flex items-center gap-2 cursor-pointer">Название <span class="material-symbols-outlined text-base">swap_vert</span></div>
+                            </th>
+                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal w-1/5">
+                                <div class="flex items-center gap-2 cursor-pointer">Область <span class="material-symbols-outlined text-base">swap_vert</span></div>
+                            </th>
+                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal w-1/5">
+                                <div class="flex items-center gap-2 cursor-pointer">Состояние <span class="material-symbols-outlined text-base">swap_vert</span></div>
+                            </th>
+                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal w-1/5">
+                                <div class="flex items-center gap-2 cursor-pointer">Дата паспорта <span class="material-symbols-outlined text-base">swap_vert</span></div>
+                            </th>
+                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal w-1/5">
+                                <div class="flex items-center gap-2 cursor-pointer">Приоритет <span class="material-symbols-outlined text-base">swap_vert</span></div>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (waterObjects == null)
+                        {
+                            <tr><td colspan="5" class="px-4 py-8 text-white text-center">Загрузка данных...</td></tr>
+                        }
+                        else if (!waterObjects.Any())
+                        {
+                            <tr><td colspan="5" class="px-4 py-8 text-white text-center">По вашему запросу ничего не найдено</td></tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in waterObjects)
+                            {
+                                <tr class="border-t border-border-dark hover:bg-interactive-dark/40 transition-colors">
+                                    <td class="h-[72px] px-4 py-2 text-white text-sm font-normal leading-normal">@item.Name</td>
+                                    <td class="h-[72px] px-4 py-2 text-text-secondary-dark text-sm font-normal leading-normal">@item.Region</td>
+                                    <td class="h-[72px] px-4 py-2 text-text-secondary-dark text-sm font-normal leading-normal">
+                                        @GetConditionText(item.TechnicalCondition)
+                                    </td>
+                                    <td class="h-[72px] px-4 py-2 text-text-secondary-dark text-sm font-normal leading-normal">@item.PassportDate.ToString("dd.MM.yyyy")</td>
+                                    <td class="h-[72px] px-4 py-2 text-sm font-normal leading-normal">
+                                        @{
+                                            var (bgColor, textColor, label) = GetPriorityStyle(item.PriorityLevel);
+                                        }
+                                        <div class="inline-flex items-center gap-2 rounded-full py-1 px-3 @bgColor @textColor">
+                                            <div class="size-2 rounded-full @textColor.Replace("text-", "bg-")"></div>
+                                            <span class="font-medium">@label</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex items-center justify-between mt-6 text-text-secondary-dark">
+            <p class="text-sm">Показано @(waterObjects?.Count ?? 0) объектов, Страница @currentPage</p>
+            <div class="flex items-center gap-2">
+                <button @onclick="PrevPage" class="flex items-center justify-center size-8 rounded-lg hover:bg-interactive-dark/50 transition-colors disabled:opacity-50" disabled="@(currentPage == 1)">
+                    <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+                <button class="flex items-center justify-center size-8 rounded-lg bg-primary text-white">@currentPage</button>
+                <button @onclick="NextPage" class="flex items-center justify-center size-8 rounded-lg hover:bg-interactive-dark/50 transition-colors disabled:opacity-50" disabled="@(waterObjects == null || waterObjects.Count < 10)">
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<WaterObjectDto>? waterObjects;
+    private int totalCount;
+    private int currentPage = 1;
+    private string searchText = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            var query = DbContext.WaterObjects.AsNoTracking().AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(searchText))
+            {
+                query = query.Where(w => w.Name.ToLower().Contains(searchText.ToLower()));
+            }
+
+            totalCount = await query.CountAsync();
+
+            // Default sort by Priority (High to Low?)
+            // PriorityLevel: High=2, Medium=1, Low=0. So Descending gives High first.
+            // Entity Priority: assuming matches enum.
+
+            var items = await query
+                .OrderByDescending(w => w.Priority)
+                .Skip((currentPage - 1) * 10)
+                .Take(10)
+                .Select(w => new WaterObjectDto
+                {
+                    Id = w.Id,
+                    Name = w.Name,
+                    Region = w.Region,
+                    TechnicalCondition = w.TechnicalCondition,
+                    PassportDate = w.PassportDate,
+                    PriorityLevel = (PriorityLevel)w.Priority,
+                    PdfUrl = w.PdfUrl
+                })
+                .ToListAsync();
+
+            waterObjects = items;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading dashboard data: {ex.Message}");
+        }
+    }
+
+    private async Task SearchData()
+    {
+        currentPage = 1;
+        await LoadData();
+    }
+
+    private async Task NextPage()
+    {
+        currentPage++;
+        await LoadData();
+    }
+
+    private async Task PrevPage()
+    {
+        if (currentPage > 1)
+        {
+            currentPage--;
+            await LoadData();
+        }
+    }
+
+    private string GetConditionText(int condition) => condition switch
+    {
+        1 => "Аварийное",
+        2 => "Плохое",
+        3 => "Удовлетворительное",
+        4 => "Хорошее",
+        5 => "Отличное",
+        _ => condition.ToString()
+    };
+
+    private (string BgColor, string TextColor, string Label) GetPriorityStyle(PriorityLevel level) => level switch
+    {
+        PriorityLevel.High => ("bg-high-priority/20", "text-high-priority", "Высокий"),
+        PriorityLevel.Medium => ("bg-medium-priority/20", "text-medium-priority", "Средний"),
+        PriorityLevel.Low => ("bg-low-priority/20", "text-low-priority", "Низкий"),
+        _ => ("", "", level.ToString())
+    };
+}

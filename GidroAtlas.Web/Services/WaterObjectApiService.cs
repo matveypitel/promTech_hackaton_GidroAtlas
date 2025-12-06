@@ -12,11 +12,16 @@ public class WaterObjectApiService : IWaterObjectApiService
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<WaterObjectApiService> _logger;
+    private readonly System.Text.Json.JsonSerializerOptions _jsonOptions;
 
     public WaterObjectApiService(HttpClient httpClient, ILogger<WaterObjectApiService> logger)
     {
         _httpClient = httpClient;
         _logger = logger;
+        _jsonOptions = new System.Text.Json.JsonSerializerOptions 
+        { 
+            PropertyNameCaseInsensitive = true 
+        };
     }
 
     public void SetAuthToken(string token)
@@ -74,7 +79,7 @@ public class WaterObjectApiService : IWaterObjectApiService
             
             if (response.IsSuccessStatusCode)
             {
-                return await response.Content.ReadFromJsonAsync<PagedResponseDto<WaterObjectDto>>();
+                return await response.Content.ReadFromJsonAsync<PagedResponseDto<WaterObjectDto>>(_jsonOptions);
             }
             
             _logger.LogWarning("GetAll failed with status code: {StatusCode}", response.StatusCode);
@@ -95,7 +100,7 @@ public class WaterObjectApiService : IWaterObjectApiService
             
             if (response.IsSuccessStatusCode)
             {
-                return await response.Content.ReadFromJsonAsync<WaterObjectDto>();
+                return await response.Content.ReadFromJsonAsync<WaterObjectDto>(_jsonOptions);
             }
             
             _logger.LogWarning("GetById failed with status code: {StatusCode}", response.StatusCode);
@@ -116,7 +121,7 @@ public class WaterObjectApiService : IWaterObjectApiService
             
             if (response.IsSuccessStatusCode)
             {
-                return await response.Content.ReadFromJsonAsync<List<string>>();
+                return await response.Content.ReadFromJsonAsync<List<string>>(_jsonOptions);
             }
             
             _logger.LogWarning("GetRegions failed with status code: {StatusCode}", response.StatusCode);
@@ -153,7 +158,7 @@ public class WaterObjectApiService : IWaterObjectApiService
             
             if (response.IsSuccessStatusCode)
             {
-                return await response.Content.ReadFromJsonAsync<PagedResponseDto<WaterObjectDto>>();
+                return await response.Content.ReadFromJsonAsync<PagedResponseDto<WaterObjectDto>>(_jsonOptions);
             }
             
             _logger.LogWarning("GetPriorities failed with status code: {StatusCode}", response.StatusCode);
@@ -174,7 +179,7 @@ public class WaterObjectApiService : IWaterObjectApiService
             
             if (response.IsSuccessStatusCode)
             {
-                return await response.Content.ReadFromJsonAsync<PrioritySummaryDto>();
+                return await response.Content.ReadFromJsonAsync<PrioritySummaryDto>(_jsonOptions);
             }
             
             _logger.LogWarning("GetPrioritySummary failed with status code: {StatusCode}", response.StatusCode);

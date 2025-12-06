@@ -1,0 +1,105 @@
+﻿@using static GidroAtlas.Web.Components.Pages.Map
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">
+            <MudIcon Icon="@Icons.Material.Filled.Water" Class="mr-1" />
+            Информация о водном ресурсе
+        </MudText>
+    </TitleContent>
+    <DialogContent>
+        @if (Resource != null)
+        {
+            <MudStack Spacing="3">
+                <div>
+                    <MudText Typo="Typo.h5" Class="mb-3">@Resource.Name</MudText>
+                </div>
+
+                <div>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary">Область</MudText>
+                    <MudText Typo="Typo.body1">@Resource.Region</MudText>
+                </div>
+
+                <div>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary">Тип водного ресурса</MudText>
+                    <MudText Typo="Typo.body1">@GetResourceTypeText(Resource.ResourceType)</MudText>
+                </div>
+
+                <div>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary">Тип воды</MudText>
+                    <MudText Typo="Typo.body1">@GetWaterTypeText(Resource.WaterType)</MudText>
+                </div>
+
+                <div>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary">Наличие фауны</MudText>
+                    <MudText Typo="Typo.body1">
+                        @(Resource.HasFauna ? "Да ✓" : "Нет")
+                    </MudText>
+                </div>
+
+                <div>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary">Дата паспорта</MudText>
+                    <MudText Typo="Typo.body1">@Resource.PassportDate.ToString("dd.MM.yyyy")</MudText>
+                </div>
+
+                <div>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary">Техническое состояние</MudText>
+                    <MudRating ReadOnly="true" SelectedValue="Resource.TechnicalCondition" MaxValue="5" />
+                    <MudText Typo="Typo.caption">@Resource.TechnicalCondition из 5</MudText>
+                </div>
+
+                <div>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Primary">Координаты</MudText>
+                    <MudText Typo="Typo.body1">
+                        📍 Широта: @Resource.Latitude.ToString("F6")°, Долгота: @Resource.Longitude.ToString("F6")°
+                    </MudText>
+                </div>
+            </MudStack>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="OpenPassport">
+            Открыть паспорт
+        </MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Submit">
+            Закрыть
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance? MudDialog { get; set; }
+
+    [Parameter]
+    public WaterResource? Resource { get; set; }
+
+    private void Submit()
+    {
+        MudDialog?.Close();
+    }
+
+    private void OpenPassport()
+    {
+        // Здесь будет логика открытия паспорта
+        Console.WriteLine($"Открытие паспорта для: {Resource?.Name}");
+        // TODO: Навигация на страницу паспорта или открытие PDF
+        MudDialog?.Close();
+    }
+
+    private string GetResourceTypeText(ResourceType type) => type switch
+    {
+        ResourceType.Lake => "Озеро",
+        ResourceType.Canal => "Канал",
+        ResourceType.Reservoir => "Водохранилище",
+        _ => "Неизвестно"
+    };
+
+    private string GetWaterTypeText(WaterType type) => type switch
+    {
+        WaterType.Fresh => "Пресная",
+        WaterType.NonFresh => "Непресная",
+        WaterType.Mixed => "Смешанная",
+        _ => "Неизвестно"
+    };
+}
