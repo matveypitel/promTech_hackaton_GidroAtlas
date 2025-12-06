@@ -21,6 +21,7 @@
     <PackageReference Include="BCrypt.Net-Next" />
     <PackageReference Include="Pgvector" />
     <PackageReference Include="Pgvector.EntityFrameworkCore" />
+    <PackageReference Include="PdfPig" />
   </ItemGroup>
 
   <ItemGroup>

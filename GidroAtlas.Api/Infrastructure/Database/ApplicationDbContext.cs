@@ -14,6 +14,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<WaterObject> WaterObjects { get; set; } = null!;
     public DbSet<WaterObjectEmbedding> WaterObjectEmbeddings { get; set; } = null!;
+    public DbSet<DocumentEmbedding> DocumentEmbeddings { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -150,6 +151,59 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.Embedding)
                 .HasMethod("ivfflat")
                 .HasOperators("vector_cosine_ops");
+        });
+
+        // DocumentEmbedding configuration for pgvector (standalone documents like PDFs)
+        modelBuilder.Entity<DocumentEmbedding>(entity =>
+        {
+            entity.ToTable("document_embeddings");
+
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Id)
+                .HasColumnName("id")
+                .HasDefaultValueSql("gen_random_uuid()");
+
+            entity.Property(e => e.DocumentName)
+                .HasColumnName("document_name")
+                .IsRequired()
+                .HasMaxLength(500);
+
+            entity.Property(e => e.FileName)
+                .HasColumnName("file_name")
+                .HasMaxLength(500);
+
+            entity.Property(e => e.ChunkIndex)
+                .HasColumnName("chunk_index");
+
+            entity.Property(e => e.ContentType)
+                .HasColumnName("content_type")
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.Property(e => e.Content)
+                .HasColumnName("content")
+                .IsRequired();
+
+            entity.Property(e => e.Embedding)
+                .HasColumnName("embedding")
+                .IsRequired()
+                .HasColumnType("vector(768)");
+
+            entity.Property(e => e.CreatedAt)
+                .HasColumnName("created_at")
+                .IsRequired();
+
+            // Create IVFFlat index for efficient similarity search
+            entity.HasIndex(e => e.Embedding)
+                .HasMethod("ivfflat")
+                .HasOperators("vector_cosine_ops");
+
+            // Index for filtering by document name
+            entity.HasIndex(e => e.DocumentName);
+            
+            // Index for filtering by content type
+            entity.HasIndex(e => e.ContentType);
         });
 
         SeedUsers(modelBuilder);

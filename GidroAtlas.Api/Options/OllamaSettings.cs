@@ -26,12 +26,17 @@ public class OllamaSettings
     public int TimeoutSeconds { get; set; } = 120;
 
     /// <summary>
-    /// Temperature for generation (0.0 - 1.0)
+    /// Temperature for generation (0.0 - 1.0). Lower = faster, more deterministic
     /// </summary>
-    public float Temperature { get; set; } = 0.7f;
+    public float Temperature { get; set; } = 0.5f;
 
     /// <summary>
-    /// Maximum number of tokens to generate
+    /// Maximum number of tokens to generate. Lower = faster responses
     /// </summary>
     public int MaxTokens { get; set; } = 1024;
+
+    /// <summary>
+    /// Number of context tokens for the model
+    /// </summary>
+    public int NumCtx { get; set; } = 8192;
 }
