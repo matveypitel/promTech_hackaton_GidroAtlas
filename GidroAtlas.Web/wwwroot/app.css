@@ -27,3 +27,48 @@ h1:focus {
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
 }
+
+/* Chat Toggle Button */
+.chat-toggle-btn {
+    position: relative;
+    transition: all 0.3s ease !important;
+}
+
+.chat-toggle-btn::after {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #3dcb6c;
+    border-radius: 50%;
+    top: 8px;
+    right: 8px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.chat-toggle-btn.active {
+    background: rgba(126, 111, 255, 0.2) !important;
+    color: #7e6fff !important;
+}
+
+.chat-toggle-btn:hover {
+    transform: scale(1.1);
+}
+
+/* Chat Overlay */
+.chat-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1099;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    backdrop-filter: blur(4px);
+}
+
+.chat-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+}

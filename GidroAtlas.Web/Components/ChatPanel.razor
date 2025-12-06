@@ -1,0 +1,666 @@
+@using GidroAtlas.Web.Interfaces
+@using GidroAtlas.Shared.DTOs
+@inject IChatApiService ChatService
+@inject IJSRuntime JS
+
+<div class="@($"chat-panel {(IsOpen ? "open" : "")}")" @onclick:stopPropagation="true">
+    <div class="chat-header">
+        <div class="chat-header-content">
+            <div class="chat-header-icon">
+                <MudIcon Icon="@Icons.Material.Filled.SmartToy" Size="Size.Medium" />
+            </div>
+            <div class="chat-header-info">
+                <span class="chat-title">ГидроАтлас AI</span>
+                <span class="chat-subtitle">@GetStatusText()</span>
+            </div>
+        </div>
+        <MudIconButton Icon="@Icons.Material.Filled.Close" 
+                       Size="Size.Small" 
+                       OnClick="@(() => OnClose.InvokeAsync())"
+                       Class="chat-close-btn" />
+    </div>
+    
+    <div class="chat-messages" @ref="_messagesContainer">
+        @if (!_messages.Any())
+        {
+            <div class="chat-welcome">
+                <div class="welcome-icon">
+                    <MudIcon Icon="@Icons.Material.Filled.Water" Size="Size.Large" />
+                </div>
+                <h3>Добро пожаловать!</h3>
+                <p>Я ваш AI-помощник по водным ресурсам Казахстана. Задайте мне любой вопрос о реках, озерах, водоемах и их характеристиках.</p>
+                <div class="suggestion-chips">
+                    <MudChip T="string" OnClick="@(() => SendSuggestion("Какие крупнейшие реки Казахстана?"))" 
+                             Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary">
+                        Крупнейшие реки
+                    </MudChip>
+                    <MudChip T="string" OnClick="@(() => SendSuggestion("Расскажи о водных ресурсах Алматинской области"))" 
+                             Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary">
+                        Алматинская область
+                    </MudChip>
+                    <MudChip T="string" OnClick="@(() => SendSuggestion("Какие озера есть в Казахстане?"))" 
+                             Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary">
+                        Озера Казахстана
+                    </MudChip>
+                </div>
+            </div>
+        }
+        else
+        {
+            @foreach (var message in _messages)
+            {
+                <div class="@($"chat-message {(message.IsUser ? "user" : "assistant")}")">
+                    @if (!message.IsUser)
+                    {
+                        <div class="message-avatar">
+                            <MudIcon Icon="@Icons.Material.Filled.SmartToy" Size="Size.Small" />
+                        </div>
+                    }
+                    <div class="message-content">
+                        <div class="message-bubble">
+                            @if (message.IsLoading)
+                            {
+                                <div class="typing-indicator">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                            }
+                            else
+                            {
+                                <p>@message.Text</p>
+                            }
+                        </div>
+                        @if (!message.IsUser && message.Sources?.Any() == true)
+                        {
+                            <div class="message-sources">
+                                <span class="sources-label">Источники:</span>
+                                @foreach (var source in message.Sources.Take(3))
+                                {
+                                    <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Info">
+                                        @source.Name (@((int)(source.Relevance * 100))%)
+                                    </MudChip>
+                                }
+                            </div>
+                        }
+                        @if (!message.IsLoading && message.ProcessingTimeMs > 0)
+                        {
+                            <span class="message-time">@(message.ProcessingTimeMs)мс</span>
+                        }
+                    </div>
+                    @if (message.IsUser)
+                    {
+                        <div class="message-avatar user-avatar">
+                            <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
+                        </div>
+                    }
+                </div>
+            }
+        }
+    </div>
+    
+    <div class="chat-input-area">
+        <div class="chat-input-container">
+            <MudTextField @bind-Value="_inputMessage" 
+                          Placeholder="Задайте вопрос о водных ресурсах..."
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Class="chat-input"
+                          Immediate="true"
+                          DisableUnderLine="true"
+                          OnKeyDown="@HandleKeyDown"
+                          Disabled="@_isLoading" />
+            <MudIconButton Icon="@Icons.Material.Filled.Send" 
+                           Color="Color.Primary"
+                           Size="Size.Medium"
+                           OnClick="@SendMessage"
+                           Disabled="@(string.IsNullOrWhiteSpace(_inputMessage) || _isLoading)"
+                           Class="send-button" />
+        </div>
+    </div>
+</div>
+
+<style>
+    .chat-panel {
+        position: fixed;
+        right: -420px;
+        top: 0;
+        bottom: 0;
+        width: 400px;
+        background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+        display: flex;
+        flex-direction: column;
+        z-index: 1100;
+        transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: -8px 0 32px rgba(0, 0, 0, 0.3);
+        border-left: 1px solid rgba(126, 111, 255, 0.2);
+    }
+    
+    .chat-panel.open {
+        right: 0;
+    }
+    
+    .chat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        background: linear-gradient(135deg, rgba(126, 111, 255, 0.15) 0%, rgba(74, 134, 255, 0.1) 100%);
+        border-bottom: 1px solid rgba(126, 111, 255, 0.2);
+        backdrop-filter: blur(10px);
+    }
+    
+    .chat-header-content {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .chat-header-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #7e6fff 0%, #4a86ff 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(126, 111, 255, 0.3);
+    }
+    
+    .chat-header-icon .mud-icon-root {
+        color: white !important;
+    }
+    
+    .chat-header-info {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .chat-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #fff;
+    }
+    
+    .chat-subtitle {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .chat-close-btn {
+        color: rgba(255, 255, 255, 0.7) !important;
+    }
+    
+    .chat-close-btn:hover {
+        color: #fff !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .chat-messages::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .chat-messages::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .chat-messages::-webkit-scrollbar-thumb {
+        background: rgba(126, 111, 255, 0.3);
+        border-radius: 3px;
+    }
+    
+    .chat-messages::-webkit-scrollbar-thumb:hover {
+        background: rgba(126, 111, 255, 0.5);
+    }
+    
+    .chat-welcome {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 40px 20px;
+        color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .welcome-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, rgba(126, 111, 255, 0.2) 0%, rgba(74, 134, 255, 0.15) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        animation: float 3s ease-in-out infinite;
+    }
+    
+    .welcome-icon .mud-icon-root {
+        color: #7e6fff !important;
+        font-size: 40px !important;
+    }
+    
+    @@keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+    
+    .chat-welcome h3 {
+        font-size: 20px;
+        font-weight: 600;
+        margin: 0 0 12px 0;
+        color: #fff;
+    }
+    
+    .chat-welcome p {
+        font-size: 14px;
+        line-height: 1.6;
+        margin: 0 0 24px 0;
+        color: rgba(255, 255, 255, 0.6);
+    }
+    
+    .suggestion-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+    }
+    
+    .suggestion-chips .mud-chip {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .suggestion-chips .mud-chip:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(126, 111, 255, 0.3);
+    }
+    
+    .chat-message {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        animation: slideIn 0.3s ease;
+    }
+    
+    @@keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .chat-message.user {
+        justify-content: flex-end;
+    }
+    
+    .message-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #7e6fff 0%, #4a86ff 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    
+    .message-avatar .mud-icon-root {
+        color: white !important;
+        font-size: 18px !important;
+    }
+    
+    .user-avatar {
+        background: linear-gradient(135deg, #3dcb6c 0%, #2aa555 100%);
+    }
+    
+    .message-content {
+        max-width: 280px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .message-bubble {
+        padding: 12px 16px;
+        border-radius: 16px;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    
+    .chat-message.assistant .message-bubble {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.9);
+        border-top-left-radius: 4px;
+    }
+    
+    .chat-message.user .message-bubble {
+        background: linear-gradient(135deg, #7e6fff 0%, #4a86ff 100%);
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+    
+    .message-bubble p {
+        margin: 0;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+    
+    .message-sources {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        align-items: center;
+        padding-top: 4px;
+    }
+    
+    .sources-label {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .message-sources .mud-chip {
+        height: 22px !important;
+        font-size: 10px !important;
+    }
+    
+    .message-time {
+        font-size: 10px;
+        color: rgba(255, 255, 255, 0.4);
+        text-align: right;
+    }
+    
+    .typing-indicator {
+        display: flex;
+        gap: 4px;
+        padding: 4px 0;
+    }
+    
+    .typing-indicator span {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: rgba(126, 111, 255, 0.6);
+        animation: typing 1.4s ease-in-out infinite;
+    }
+    
+    .typing-indicator span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    
+    .typing-indicator span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+    
+    @@keyframes typing {
+        0%, 100% { transform: scale(0.8); opacity: 0.5; }
+        50% { transform: scale(1.2); opacity: 1; }
+    }
+    
+    .chat-input-area {
+        padding: 16px 20px;
+        background: rgba(0, 0, 0, 0.2);
+        border-top: 1px solid rgba(126, 111, 255, 0.15);
+    }
+    
+    .chat-input-container {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        border: 1px solid rgba(126, 111, 255, 0.2);
+        padding: 4px 4px 4px 16px;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .chat-input-container:focus-within {
+        border-color: rgba(126, 111, 255, 0.5);
+        box-shadow: 0 0 20px rgba(126, 111, 255, 0.15);
+    }
+    
+    .chat-input {
+        flex: 1;
+    }
+    
+    .chat-input .mud-input-slot {
+        font-size: 14px !important;
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+    
+    .chat-input .mud-input-outlined-border {
+        border: none !important;
+    }
+    
+    .chat-input .mud-input {
+        background: transparent !important;
+    }
+    
+    .chat-input input::placeholder {
+        color: rgba(255, 255, 255, 0.4) !important;
+    }
+    
+    .send-button {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px !important;
+        background: linear-gradient(135deg, #7e6fff 0%, #4a86ff 100%) !important;
+        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+    }
+    
+    .send-button:hover:not(:disabled) {
+        transform: scale(1.05);
+        box-shadow: 0 4px 16px rgba(126, 111, 255, 0.4) !important;
+    }
+    
+    .send-button:disabled {
+        opacity: 0.5 !important;
+        background: rgba(126, 111, 255, 0.3) !important;
+    }
+    
+    .send-button .mud-icon-root {
+        color: white !important;
+    }
+    
+    /* Dark mode overlay */
+    .chat-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1099;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+    
+    .chat-overlay.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+</style>
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    
+    private ElementReference _messagesContainer;
+    private string _inputMessage = "";
+    private bool _isLoading = false;
+    private bool _isServiceAvailable = false;
+    private List<ChatMessage> _messages = new();
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await CheckServiceStatus();
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Initialize auth token from localStorage
+            try
+            {
+                var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+                if (!string.IsNullOrEmpty(token))
+                {
+                    ChatService.SetAuthToken(token);
+                }
+            }
+            catch { /* ignore */ }
+        }
+        
+        // Scroll to bottom when new messages are added
+        if (_messages.Any())
+        {
+            await ScrollToBottom();
+        }
+    }
+    
+    private async Task CheckServiceStatus()
+    {
+        try
+        {
+            var token = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+            if (!string.IsNullOrEmpty(token))
+            {
+                ChatService.SetAuthToken(token);
+            }
+            
+            var status = await ChatService.GetStatusAsync();
+            _isServiceAvailable = status?.IsAvailable ?? false;
+        }
+        catch
+        {
+            _isServiceAvailable = false;
+        }
+    }
+    
+    private string GetStatusText()
+    {
+        return _isServiceAvailable ? "Онлайн" : "Проверка...";
+    }
+    
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey && !string.IsNullOrWhiteSpace(_inputMessage) && !_isLoading)
+        {
+            await SendMessage();
+        }
+    }
+    
+    private async Task SendSuggestion(string suggestion)
+    {
+        _inputMessage = suggestion;
+        await SendMessage();
+    }
+    
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(_inputMessage) || _isLoading)
+            return;
+        
+        var userMessage = _inputMessage.Trim();
+        _inputMessage = "";
+        
+        // Add user message
+        _messages.Add(new ChatMessage 
+        { 
+            Text = userMessage, 
+            IsUser = true 
+        });
+        
+        // Add loading message
+        var loadingMessage = new ChatMessage 
+        { 
+            IsUser = false, 
+            IsLoading = true 
+        };
+        _messages.Add(loadingMessage);
+        
+        _isLoading = true;
+        StateHasChanged();
+        
+        await ScrollToBottom();
+        
+        try
+        {
+            var response = await ChatService.AskAsync(userMessage);
+            
+            // Remove loading message and add response
+            _messages.Remove(loadingMessage);
+            
+            if (response != null)
+            {
+                _messages.Add(new ChatMessage
+                {
+                    Text = response.Answer,
+                    IsUser = false,
+                    Sources = response.Sources,
+                    ProcessingTimeMs = response.ProcessingTimeMs
+                });
+            }
+            else
+            {
+                _messages.Add(new ChatMessage
+                {
+                    Text = "Не удалось получить ответ. Попробуйте позже.",
+                    IsUser = false
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            _messages.Remove(loadingMessage);
+            _messages.Add(new ChatMessage
+            {
+                Text = $"Произошла ошибка: {ex.Message}",
+                IsUser = false
+            });
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+            await ScrollToBottom();
+        }
+    }
+    
+    private async Task ScrollToBottom()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("eval", @"
+                setTimeout(() => {
+                    const container = document.querySelector('.chat-messages');
+                    if (container) {
+                        container.scrollTop = container.scrollHeight;
+                    }
+                }, 50);
+            ");
+        }
+        catch { /* ignore */ }
+    }
+    
+    private class ChatMessage
+    {
+        public string Text { get; set; } = "";
+        public bool IsUser { get; set; }
+        public bool IsLoading { get; set; }
+        public List<ChatSourceDto>? Sources { get; set; }
+        public long ProcessingTimeMs { get; set; }
+    }
+}
