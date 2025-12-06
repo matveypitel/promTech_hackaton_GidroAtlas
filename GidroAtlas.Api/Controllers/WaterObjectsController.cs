@@ -87,12 +87,61 @@ public class WaterObjectsController : ControllerBase
     /// Gets all available regions for filtering
     /// </summary>
     [HttpGet(AppConstants.Routes.Regions)]
-    [AllowAnonymous]
+    [Authorize(Policy = AuthPolicies.ExpertOnly)]
     [ProducesResponseType(typeof(List<string>), StatusCodes.Status200OK)]
     public async Task<ActionResult<List<string>>> GetRegions()
     {
         var regions = await _waterObjectService.GetRegionsAsync();
         return Ok(regions);
+    }
+
+    /// <summary>
+    /// Gets the passport PDF file for a specific water object
+    /// </summary>
+    /// <param name="id">Water object ID</param>
+    /// <returns>PDF file of the water object passport</returns>
+    [HttpGet("{id:guid}/" + AppConstants.Routes.Passport)]
+    [Authorize(Policy = AuthPolicies.ExpertOnly)]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetPassportPdf(Guid id)
+    {
+        var waterObject = await _waterObjectService.GetByIdAsync(id);
+        
+        if (waterObject == null)
+        {
+            return NotFound(new { message = AppConstants.ErrorMessages.WaterObjectNotFound });
+        }
+
+        var basePath = Environment.GetEnvironmentVariable("PASPORTS_PATH") ?? Path.Combine(Directory.GetCurrentDirectory(), "..");
+        
+        // Remove leading slash from PdfUrl if present (e.g., "/pasports/file.pdf" -> "pasports/file.pdf")
+        var relativePath = waterObject.PdfUrl.TrimStart('/');
+        
+        // Construct full path to the PDF file
+        var passportPath = Path.Combine(basePath, relativePath);
+
+        if (!System.IO.File.Exists(passportPath))
+        {
+            _logger.LogWarning("Passport PDF not found for water object {ObjectId} at path {Path}", id, passportPath);
+            return NotFound(new { message = "Passport PDF file not found", path = relativePath });
+        }
+
+        try
+        {
+            var fileBytes = await System.IO.File.ReadAllBytesAsync(passportPath);
+            
+            // Create a user-friendly filename
+            var downloadFileName = $"Паспорт_{waterObject.Name}.pdf";
+            
+            return File(fileBytes, AppConstants.ContentTypes.ApplicationPdf, downloadFileName);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error reading passport PDF for water object {ObjectId} from path {Path}", id, passportPath);
+            return StatusCode(StatusCodes.Status500InternalServerError, 
+                new { message = "Error reading passport PDF file" });
+        }
     }
 
     /// <summary>

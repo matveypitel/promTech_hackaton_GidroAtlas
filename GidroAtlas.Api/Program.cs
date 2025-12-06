@@ -1,8 +1,13 @@
 using GidroAtlas.Api.Abstractions;
 using GidroAtlas.Api.Handlers;
 using GidroAtlas.Api.Infrastructure.Auth;
-using GidroAtlas.Api.Infrastructure.Chat;
+using GidroAtlas.Api.Infrastructure.AI.Abstractions;
+using GidroAtlas.Api.Infrastructure.AI.Chat;
+using GidroAtlas.Api.Infrastructure.AI.Ollama;
+using GidroAtlas.Api.Infrastructure.AI.Rag;
 using GidroAtlas.Api.Infrastructure.Database;
+using GidroAtlas.Api.Infrastructure.Documents;
+using GidroAtlas.Api.Infrastructure.Documents.Abstractions;
 using GidroAtlas.Api.Infrastructure.ML;
 using GidroAtlas.Api.Options;
 using GidroAtlas.Api.Services;
@@ -64,7 +69,13 @@ builder.Services.Configure<OllamaSettings>(ollamaSettings);
 
 // Register HttpClient for Ollama services
 builder.Services.AddHttpClient<IEmbeddingService, OllamaEmbeddingService>();
-builder.Services.AddHttpClient<IChatService, ChatService>();
+builder.Services.AddHttpClient<ILlmService, OllamaLlmService>();
+
+// Register RAG and Chat services
+builder.Services.AddScoped<IRagService, RagService>();
+builder.Services.AddScoped<IPdfTextExtractor, PdfPigTextExtractor>();
+builder.Services.AddScoped<IDocumentIndexingService, DocumentIndexingService>();
+builder.Services.AddScoped<IChatService, ChatService>();
 
 // Background service for auto-indexing water objects
 builder.Services.AddHostedService<IndexingBackgroundService>();
