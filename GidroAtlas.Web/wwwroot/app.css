@@ -20,9 +20,9 @@ h1:focus {
     color: white;
 }
 
-    .blazor-error-boundary::after {
-        content: "An error has occurred."
-    }
+.blazor-error-boundary::after {
+    content: "An error has occurred."
+}
 
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
@@ -39,7 +39,7 @@ h1:focus {
     position: absolute;
     width: 8px;
     height: 8px;
-    background: #3dcb6c;
+    background: #388E3C;
     border-radius: 50%;
     top: 8px;
     right: 8px;
@@ -48,8 +48,8 @@ h1:focus {
 }
 
 .chat-toggle-btn.active {
-    background: rgba(126, 111, 255, 0.2) !important;
-    color: #7e6fff !important;
+    background: rgba(19, 127, 236, 0.2) !important;
+    color: #137fec !important;
 }
 
 .chat-toggle-btn:hover {

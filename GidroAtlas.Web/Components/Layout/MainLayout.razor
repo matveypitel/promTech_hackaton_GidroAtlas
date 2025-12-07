@@ -11,7 +11,10 @@
 <MudLayout Class="@( _isDarkMode ? "dark" : "" )">
     <MudAppBar Elevation="1">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
-        <MudText Typo="Typo.h5" Class="ml-3">Application</MudText>
+        <div class="d-flex align-center gap-2 ml-3">
+            <MudIcon Icon="@Icons.Material.Filled.Water" Color="Color.Primary" Size="Size.Medium" />
+            <MudText Typo="Typo.h5" Style="font-weight: 700; color: white;">GidroAtlas</MudText>
+        </div>
         <MudSpacer />
         
         @* Chat Bot Button - Expert only *@
@@ -104,31 +107,31 @@
 
     private readonly PaletteDark _darkPalette = new()
     {
-        Primary = "#7e6fff",
-        Surface = "#1e1e2d",
-        Background = "#1a1a27",
-        BackgroundGray = "#151521",
-        AppbarText = "#92929f",
-        AppbarBackground = "rgba(26,26,39,0.8)",
-        DrawerBackground = "#1a1a27",
-        ActionDefault = "#74718e",
-        ActionDisabled = "#9999994d",
-        ActionDisabledBackground = "#605f6d4d",
-        TextPrimary = "#b2b0bf",
-        TextSecondary = "#92929f",
+        Primary = "#137fec",
+        Surface = "#192633",
+        Background = "#101922",
+        BackgroundGray = "#0d1419",
+        AppbarText = "#92adc9",
+        AppbarBackground = "rgba(16,25,34,0.95)",
+        DrawerBackground = "#192633",
+        ActionDefault = "#92adc9",
+        ActionDisabled = "#324d674d",
+        ActionDisabledBackground = "#2336484d",
+        TextPrimary = "#ffffff",
+        TextSecondary = "#92adc9",
         TextDisabled = "#ffffff33",
-        DrawerIcon = "#92929f",
-        DrawerText = "#92929f",
-        GrayLight = "#2a2833",
-        GrayLighter = "#1e1e2d",
-        Info = "#4a86ff",
-        Success = "#3dcb6c",
-        Warning = "#ffb545",
-        Error = "#ff3f5f",
-        LinesDefault = "#33323e",
-        TableLines = "#33323e",
-        Divider = "#292838",
-        OverlayLight = "#1e1e2d80",
+        DrawerIcon = "#92adc9",
+        DrawerText = "#ffffff",
+        GrayLight = "#233648",
+        GrayLighter = "#192633",
+        Info = "#137fec",
+        Success = "#388E3C",
+        Warning = "#FFA000",
+        Error = "#D32F2F",
+        LinesDefault = "#324d67",
+        TableLines = "#324d67",
+        Divider = "#324d67",
+        OverlayLight = "#10192280",
     };
 
     public string DarkLightModeButtonIcon => _isDarkMode switch
