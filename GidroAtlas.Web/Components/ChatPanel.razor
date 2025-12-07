@@ -3,7 +3,7 @@
 @inject IChatApiService ChatService
 @inject IJSRuntime JS
 
-<div class="@($"chat-panel {(IsOpen ? "open" : "")}")" @onclick:stopPropagation="true">
+<div class="@($"chat-panel {(IsOpen ? "open" : "")}")" @onclick:stopPropagation="true" style="z-index: 9999">
     <div class="chat-header">
         <div class="chat-header-content">
             <div class="chat-header-icon">
