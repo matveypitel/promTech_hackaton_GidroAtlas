@@ -89,5 +89,19 @@ window.leafletMap = {
         } catch (error) {
             console.error('Error removing marker:', error);
         }
+    },
+
+    clearMarkers: function () {
+        try {
+            for (const markerId in this.markers) {
+                if (this.markers.hasOwnProperty(markerId)) {
+                    this.map.removeLayer(this.markers[markerId]);
+                }
+            }
+            this.markers = {};
+            console.log('All markers cleared');
+        } catch (error) {
+            console.error('Error clearing markers:', error);
+        }
     }
 };

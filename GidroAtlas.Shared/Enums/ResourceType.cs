@@ -11,5 +11,8 @@ public enum ResourceType
     Canal = 1,
     
     [DisplayName("Водохранилище")]
-    Reservoir = 2
+    Reservoir = 2,
+
+    [DisplayName("Гидротехническое сооружение")]
+    HydroTechnicalStructure = 3,
 }

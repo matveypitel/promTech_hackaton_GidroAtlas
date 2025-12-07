@@ -18,73 +18,194 @@
     }
 
     <MudPaper Elevation="3" Class="pa-4">
+        <MudStack Row="true" Class="mb-4" AlignItems="AlignItems.Center" Justify="Justify.Center">
+            <MudToggleGroup T="string" Value="@selectedLayer" ValueChanged="@OnLayerChanged" Color="Color.Primary" CheckMark="true" FixedContent="true">
+                <MudToggleItem Value="@("resources")">
+                    <MudStack Row="true" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.Water" />
+                        <MudText>Водные ресурсы</MudText>
+                    </MudStack>
+                </MudToggleItem>
+                <MudToggleItem Value="@("structures")">
+                    <MudStack Row="true" Spacing="2">
+                        <MudIcon Icon="@Icons.Material.Filled.Construction" />
+                        <MudText>Гидротехнические сооружения</MudText>
+                    </MudStack>
+                </MudToggleItem>
+            </MudToggleGroup>
+        </MudStack>
+        
         <div id="map" style="height:600px; width:100%; border-radius: 8px;"></div>
     </MudPaper>
 
     @* Легенда карты *@
     @if (isExpert)
     {
-        <MudPaper Elevation="2" Class="pa-4 mt-4">
-            <MudText Typo="Typo.h6" Class="mb-3">
-                <MudIcon Icon="@Icons.Material.Filled.Info" Class="mr-2" Size="Size.Small" />
-                Легенда карты — Техническое состояние объекта
-            </MudText>
+        <MudPaper Elevation="4" Class="pa-5 mt-4" Style="background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px;">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+                <MudIcon Icon="@Icons.Material.Filled.Map" Style="color: #64b5f6; font-size: 1.75rem;" />
+                <MudText Typo="Typo.h6" Style="color: #ffffff; font-weight: 600; margin-left: 12px;">
+                    Техническое состояние объектов
+                </MudText>
+            </MudStack>
 
-            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center" Class="flex-wrap">
-                <MudChip T="string" Style="background-color: #4CAF50; color: white;" Size="Size.Small">
-                    <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small" Class="mr-1" />
-                    1 - Отличное
-                </MudChip>
-                <MudChip T="string" Style="background-color: #8BC34A; color: white;" Size="Size.Small">
-                    <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small" Class="mr-1" />
-                    2 - Хорошее
-                </MudChip>
-                <MudChip T="string" Style="background-color: #FFEB3B; color: black;" Size="Size.Small">
-                    <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small" Class="mr-1" />
-                    3 - Удовлетворительное
-                </MudChip>
-                <MudChip T="string" Style="background-color: #FF9800; color: white;" Size="Size.Small">
-                    <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small" Class="mr-1" />
-                    4 - Неудовлетворительное
-                </MudChip>
-                <MudChip T="string" Style="background-color: #F44336; color: white;" Size="Size.Small">
-                    <MudIcon Icon="@Icons.Material.Filled.Circle" Size="Size.Small" Class="mr-1" />
-                    5 - Критическое
-                </MudChip>
+            <MudStack Row="true" Spacing="3" AlignItems="AlignItems.Center" Class="flex-wrap" Justify="Justify.FlexStart">
+                @* Отличное состояние *@
+                <div class="legend-item" style="background: linear-gradient(145deg, #2e7d32 0%, #4CAF50 50%, #66bb6a 100%); box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);">
+                    <div class="legend-icon" style="background: rgba(255,255,255,0.25);">
+                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Style="color: #fff; font-size: 1.1rem;" />
+                    </div>
+                    <div class="legend-content">
+                        <span class="legend-text">1 Отличное</span>
+                    </div>
+                </div>
+
+                @* Хорошее состояние *@
+                <div class="legend-item" style="background: linear-gradient(145deg, #689f38 0%, #8BC34A 50%, #9ccc65 100%); box-shadow: 0 4px 15px rgba(139, 195, 74, 0.4);">
+                    <div class="legend-icon" style="background: rgba(255,255,255,0.25);">
+                        <MudIcon Icon="@Icons.Material.Filled.ThumbUp" Style="color: #fff; font-size: 1.1rem;" />
+                    </div>
+                    <div class="legend-content">
+                        <span class="legend-text">2 Хорошее</span>
+                    </div>
+                </div>
+
+                @* Удовлетворительное состояние *@
+                <div class="legend-item" style="background: linear-gradient(145deg, #f9a825 0%, #FFEB3B 50%, #ffee58 100%); box-shadow: 0 4px 15px rgba(255, 235, 59, 0.4);">
+                    <div class="legend-icon" style="background: rgba(0,0,0,0.15);">
+                        <MudIcon Icon="@Icons.Material.Filled.Info" Style="color: #5d4037; font-size: 1.1rem;" />
+                    </div>
+                    <div class="legend-content">
+                        <span class="legend-text" style="color: #3e2723;">3 Удовлетворит.</span>
+                    </div>
+                </div>
+
+                @* Неудовлетворительное состояние *@
+                <div class="legend-item" style="background: linear-gradient(145deg, #ef6c00 0%, #FF9800 50%, #ffb74d 100%); box-shadow: 0 4px 15px rgba(255, 152, 0, 0.4);">
+                    <div class="legend-icon" style="background: rgba(255,255,255,0.25);">
+                        <MudIcon Icon="@Icons.Material.Filled.Warning" Style="color: #fff; font-size: 1.1rem;" />
+                    </div>
+                    <div class="legend-content">
+                        <span class="legend-text">4 Неудовл.</span>
+                    </div>
+                </div>
+
+                @* Критическое состояние *@
+                <div class="legend-item" style="background: linear-gradient(145deg, #c62828 0%, #F44336 50%, #ef5350 100%); box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);">
+                    <div class="legend-icon" style="background: rgba(255,255,255,0.25);">
+                        <MudIcon Icon="@Icons.Material.Filled.Error" Style="color: #fff; font-size: 1.1rem;" />
+                    </div>
+                    <div class="legend-content">
+                        <span class="legend-text"> 5 Критическое</span>
+                    </div>
+                </div>
             </MudStack>
         </MudPaper>
+
+        <style>
+            .legend-item {
+                display: flex;
+                align-items: center;
+                padding: 10px 16px;
+                border-radius: 12px;
+                min-width: 140px;
+                transition: all 0.3s ease;
+                cursor: default;
+            }
+            
+            .legend-item:hover {
+                transform: translateY(-2px);
+                filter: brightness(1.1);
+            }
+            
+            .legend-icon {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 10px;
+                flex-shrink: 0;
+            }
+            
+            .legend-content {
+                display: flex;
+                flex-direction: column;
+                line-height: 1.2;
+            }
+            
+            .legend-number {
+                font-size: 0.75rem;
+                font-weight: 700;
+                color: rgba(255,255,255,0.9);
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            
+            .legend-text {
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: #ffffff;
+                text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            }
+        </style>
     }
 </MudContainer>
 
 @code {
     private DotNetObjectReference<Map>? dotNetHelper;
-    private List<WaterObjectDto> waterResources = new();
+    private List<WaterObjectDto> allWaterObjects = new();
+    private List<WaterObjectDto> displayedObjects = new();
     private string? loadError;
     private bool isExpert;
     private string? authToken;
+    private string selectedLayer = "resources"; // "resources" or "structures"
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
+            // Now that we have seeded DB, we can load everything from API
             var response = await WaterObjectApi.GetAllAsync(new WaterObjectFilterDto 
             { 
-                PageSize = 1000 // Load all objects for the map
+                PageSize = 2000 // Load enough to cover all
             });
             
-            if (response != null)
+            if (response != null && response.Items != null)
             {
-                waterResources = response.Items.ToList();
+                allWaterObjects = response.Items.ToList();
             }
-            else
-            {
-                loadError = "Не удалось загрузить данные с сервера";
-            }
+            
+            FilterObjects();
         }
         catch (Exception ex)
         {
-            loadError = ex.Message + (ex.InnerException != null ? $" Inner: {ex.InnerException.Message}" : "");
+            loadError = ex.Message;
             Console.WriteLine($"Error loading map data: {ex.Message}");
+        }
+    }
+
+    private void OnLayerChanged(string layer)
+    {
+        selectedLayer = layer;
+        FilterObjects();
+        _ = UpdateMapMarkers();
+    }
+
+    private void FilterObjects()
+    {
+        if (selectedLayer == "structures")
+        {
+            displayedObjects = allWaterObjects
+                .Where(x => x.ResourceType == ResourceType.HydroTechnicalStructure)
+                .ToList();
+        }
+        else
+        {
+            displayedObjects = allWaterObjects
+                .Where(x => x.ResourceType != ResourceType.HydroTechnicalStructure)
+                .ToList();
         }
     }
 
@@ -94,10 +215,8 @@
 
         try
         {
-            // Создаем ссылку на этот компонент для JS Interop
             dotNetHelper = DotNetObjectReference.Create(this);
 
-            // Check role and get auth token
             var userRole = await JS.InvokeAsync<string>("localStorage.getItem", "userRole");
             isExpert = userRole == "Expert";
             
@@ -107,32 +226,64 @@
                 WaterObjectApi.SetAuthToken(authToken);
             }
 
-            // Start map
-            await JS.InvokeVoidAsync("leafletMap.create", "map", 48.0, 67.0, 5);
+            StateHasChanged();
 
-            // Add markers
-            foreach (var resource in waterResources)
+            await JS.InvokeVoidAsync("leafletMap.create", "map", 48.0, 67.0, 5);
+            await UpdateMapMarkers(); 
+        }
+        catch (JSException ex)
+        {
+            Console.WriteLine($"JSInterop error: {ex.Message}");
+        }
+    }
+
+    private async Task UpdateMapMarkers()
+    {
+        // Try to clear markers, but don't stop execution if it fails (e.g. old JS cached)
+        try 
+        {
+            await JS.InvokeVoidAsync("leafletMap.clearMarkers");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Failed to clear markers (possibly cached JS): {ex.Message}");
+        }
+
+        try
+        {
+            Console.WriteLine($"Updating markers. Displayed objects count: {displayedObjects.Count}");
+            
+            foreach (var resource in displayedObjects)
             {
-                // Guest sees condition 0 (Standard Marker), Expert sees real condition
-                var conditionToPass = isExpert ? resource.TechnicalCondition : 0;
+                // Role-Based Visualization Logic
+                // Expert: Sees actual Technical Condition (1-5) -> Colored Circle
+                // Guest: Sees 0 -> Standard Icon (Neutral)
+                
+                int visualCondition = 0;
+
+                if (isExpert)
+                {
+                    visualCondition = resource.TechnicalCondition;
+                }
+                else
+                {
+                    visualCondition = 0;
+                }
 
                 await JS.InvokeVoidAsync("leafletMap.addMarker",
                     (double)resource.Latitude,
                     (double)resource.Longitude,
                     resource.Name,
                     resource.Id.ToString(),
-                    conditionToPass,
+                    visualCondition,
                     resource.Region);
 
-                // Устанавливаем callback для клика по маркеру
                 await JS.InvokeVoidAsync("leafletMap.setMarkerClickCallback", dotNetHelper, resource.Id.ToString());
             }
-
-            Console.WriteLine("Map initialized successfully");
         }
-        catch (JSException ex)
+        catch (Exception ex)
         {
-            Console.WriteLine($"JSInterop error: {ex.Message}");
+             Console.WriteLine($"Error adding markers: {ex.Message}");
         }
     }
 
@@ -142,7 +293,7 @@
         if (!Guid.TryParse(resourceId, out var id))
             return;
             
-        var selectedResource = waterResources.FirstOrDefault(r => r.Id == id);
+        var selectedResource = allWaterObjects.FirstOrDefault(r => r.Id == id);
         if (selectedResource != null)
         {
             var parameters = new DialogParameters<WaterResourceDialog>
@@ -166,36 +317,14 @@
 
     private async Task HandleWaterObjectUpdated(WaterObjectDto updatedResource)
     {
-        // Update local list
-        var index = waterResources.FindIndex(r => r.Id == updatedResource.Id);
+        var index = allWaterObjects.FindIndex(r => r.Id == updatedResource.Id);
         if (index >= 0)
         {
-            waterResources[index] = updatedResource;
+            allWaterObjects[index] = updatedResource;
         }
-
-        // Update marker on the map
-        try
-        {
-            // Remove old marker and add updated one
-            await JS.InvokeVoidAsync("leafletMap.removeMarker", updatedResource.Id.ToString());
-            
-            var conditionToPass = isExpert ? updatedResource.TechnicalCondition : 0;
-            await JS.InvokeVoidAsync("leafletMap.addMarker",
-                (double)updatedResource.Latitude,
-                (double)updatedResource.Longitude,
-                updatedResource.Name,
-                updatedResource.Id.ToString(),
-                conditionToPass,
-                updatedResource.Region);
-            
-            await JS.InvokeVoidAsync("leafletMap.setMarkerClickCallback", dotNetHelper, updatedResource.Id.ToString());
-            
-            Console.WriteLine($"Map marker updated for: {updatedResource.Name}");
-        }
-        catch (JSException ex)
-        {
-            Console.WriteLine($"Error updating map marker: {ex.Message}");
-        }
+        
+        FilterObjects();
+        await UpdateMapMarkers();
         
         StateHasChanged();
     }

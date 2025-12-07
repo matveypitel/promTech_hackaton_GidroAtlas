@@ -176,11 +176,11 @@ public class WaterObjectService : IWaterObjectService
             WaterType = entity.WaterType,
             HasFauna = entity.HasFauna,
             PassportDate = entity.PassportDate,
-            TechnicalCondition = entity.TechnicalCondition,
+            TechnicalCondition = entity.TechnicalCondition, // Return actual value
             Latitude = entity.Latitude,
             Longitude = entity.Longitude,
             PdfUrl = entity.PdfUrl,
-            Priority = priority,
+            Priority = priority, // Return actual value
             PriorityLevel = GetPriorityLevel(priority),
             AttentionProbability = attentionProbability
         };
