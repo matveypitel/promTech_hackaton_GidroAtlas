@@ -173,16 +173,16 @@ using (var scope = app.Services.CreateScope())
 
         var realStructures = new[]
         {
-            new { Name = "Бухтарминская ГЭС", Region = "Восточно-Казахстанская область", Lat = 49.62f, Lng = 83.52f },
-            new { Name = "Усть-Каменогорская ГЭС", Region = "Восточно-Казахстанская область", Lat = 49.97f, Lng = 82.68f },
-            new { Name = "Шульбинская ГЭС", Region = "Восточно-Казахстанская область", Lat = 50.39f, Lng = 81.09f },
-            new { Name = "Капчагайская ГЭС", Region = "Алматинская область", Lat = 43.91f, Lng = 77.08f },
-            new { Name = "Шардаринская ГЭС", Region = "Туркестанская область", Lat = 41.25f, Lng = 67.96f },
-            new { Name = "Мойнакская ГЭС", Region = "Алматинская область", Lat = 43.19f, Lng = 78.96f },
-            new { Name = "Сергеевский гидроузел", Region = "Северо-Казахстанская область", Lat = 53.70f, Lng = 67.28f },
-            new { Name = "Вячеславское водохранилище (Плотина)", Region = "Акмолинская область", Lat = 51.08f, Lng = 71.98f },
-            new { Name = "Бартогайское водохранилище (Плотина)", Region = "Алматинская область", Lat = 43.36f, Lng = 78.50f },
-            new { Name = "Тасоткельское водохранилище (Плотина)", Region = "Жамбылская область", Lat = 43.60f, Lng = 73.68f }
+            new { Name = "Бухтарминская ГЭС", Region = "Восточно-Казахстанская область", Lat = 49.62f, Lng = 83.52f, PdfUrl = "/pasports/a1b2c3d4-1234-5678-9abc-def012345003.pdf" },
+            new { Name = "Усть-Каменогорская ГЭС", Region = "Восточно-Казахстанская область", Lat = 49.97f, Lng = 82.68f, PdfUrl = "/pasports/a1b2c3d4-1234-5678-9abc-def012345003.pdf" },
+            new { Name = "Шульбинская ГЭС", Region = "Восточно-Казахстанская область", Lat = 50.39f, Lng = 81.09f, PdfUrl = "/pasports/a1b2c3d4-1234-5678-9abc-def012345003.pdf" },
+            new { Name = "Капчагайская ГЭС", Region = "Алматинская область", Lat = 43.91f, Lng = 77.08f, PdfUrl = "/pasports/a1b2c3d4-1234-5678-9abc-def012345003.pdf" },
+            new { Name = "Шардаринская ГЭС", Region = "Туркестанская область", Lat = 41.25f, Lng = 67.96f, PdfUrl = "/pasports/a1b2c3d4-1234-5678-9abc-def012345003.pdf" },
+            new { Name = "Мойнакская ГЭС", Region = "Алматинская область", Lat = 43.19f, Lng = 78.96f, PdfUrl = "/pasports/a1b2c3d4-1234-5678-9abc-def012345003.pdf" },
+            new { Name = "Сергеевский гидроузел", Region = "Северо-Казахстанская область", Lat = 53.70f, Lng = 67.28f, PdfUrl = "/pasports/a1b2c3d4-1234-5678-9abc-def012345003.pdf" },
+            new { Name = "Вячеславское водохранилище (Плотина)", Region = "Акмолинская область", Lat = 51.08f, Lng = 71.98f, PdfUrl = "/pasports/VH_DH_S.pdf" },
+            new { Name = "Бартогайское водохранилище (Плотина)", Region = "Алматинская область", Lat = 43.36f, Lng = 78.50f, PdfUrl = "/pasports/a1b2c3d4-1234-5678-9abc-def012345003.pdf" },
+            new { Name = "Тасоткельское водохранилище (Плотина)", Region = "Жамбылская область", Lat = 43.60f, Lng = 73.68f, PdfUrl = "/pasports/a1b2c3d4-1234-5678-9abc-def012345003.pdf" }
         };
 
         foreach (var item in realStructures)
@@ -201,7 +201,7 @@ using (var scope = app.Services.CreateScope())
                 TechnicalCondition = condition,
                 Latitude = item.Lat,
                 Longitude = item.Lng,
-                PdfUrl = "#",
+                PdfUrl = item.PdfUrl,
                 Priority = condition >= 4 ? 5 : (condition >= 2 ? 3 : 1)
             });
         }
