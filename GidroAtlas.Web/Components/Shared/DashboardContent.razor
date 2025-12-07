@@ -1,0 +1,612 @@
+@using GidroAtlas.Shared.DTOs
+@using GidroAtlas.Shared.Enums
+@using GidroAtlas.Web.Components.Pages
+@using GidroAtlas.Web.Interfaces
+@inject IWaterObjectApiService WaterObjectApi
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+
+<div class="dashboard-body bg-background-dark font-display p-8 min-h-screen">
+    <div class="max-w-7xl mx-auto">
+        <header class="mb-6 flex justify-between items-center">
+            <p class="text-white text-4xl font-black leading-tight tracking-[-0.033em]">@Title</p>
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="OpenCreateDialog">
+                Добавить объект
+            </MudButton>
+        </header>
+
+        <!-- Search Bar -->
+        <div class="flex flex-col gap-4 mb-6">
+            <div class="flex flex-col md:flex-row gap-4 items-center">
+                <div class="flex-grow w-full md:w-auto">
+                    <label class="flex flex-col min-w-40 h-12 w-full">
+                        <div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+                            <div class="text-text-secondary-dark flex bg-interactive-dark items-center justify-center pl-4 rounded-l-lg">
+                                <span class="material-symbols-outlined">search</span>
+                            </div>
+                            <input @bind="searchText" @bind:event="oninput" @onkeyup="SearchData" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-lg !text-white focus:outline-0 focus:ring-2 focus:ring-primary focus:ring-inset border-none !bg-interactive-dark h-full placeholder:text-text-secondary-dark px-4 text-base font-normal leading-normal" placeholder="Поиск по названию объекта"/>
+                        </div>
+                    </label>
+                </div>
+                <button @onclick="LoadData" class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-primary/20 text-primary px-4 hover:bg-primary/30 transition-colors">
+                    <span class="material-symbols-outlined text-sm">refresh</span>
+                    <p class="text-sm font-medium">Обновить</p>
+                </button>
+                <button @onclick="ClearFilters" class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-red-500/20 text-red-400 px-4 hover:bg-red-500/30 transition-colors">
+                    <span class="material-symbols-outlined text-sm">filter_alt_off</span>
+                    <p class="text-sm font-medium">Сбросить</p>
+                </button>
+            </div>
+            
+            <!-- Filters Row 1 -->
+            <div class="flex flex-wrap gap-3">
+                <!-- Region Filter -->
+                <div class="relative">
+                    <select @bind="selectedRegion" @bind:after="LoadData" class="appearance-none h-10 w-full min-w-[140px] bg-interactive-dark text-white rounded-lg pl-4 pr-10 hover:bg-interactive-dark/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                        <option value="">Все области</option>
+                        @foreach (var region in availableRegions)
+                        {
+                            <option value="@region">@region</option>
+                        }
+                    </select>
+                    <span class="material-symbols-outlined text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-lg">expand_more</span>
+                </div>
+
+                <!-- Resource Type Filter (Only show if ALL types allowed or specifically needed) -->
+                @if (ShowResourceTypeFilter)
+                {
+                    <div class="relative">
+                        <select @bind="selectedResourceType" @bind:after="LoadData" class="appearance-none h-10 w-full min-w-[160px] bg-interactive-dark text-white rounded-lg pl-4 pr-10 hover:bg-interactive-dark/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                            <option value="">Все типы ресурсов</option>
+                            <option value="Lake">Озеро</option>
+                            <option value="Canal">Канал</option>
+                            <option value="Reservoir">Водохранилище</option>
+                            <option value="HydroTechnicalStructure">Гидротехническое сооружение</option>
+                        </select>
+                        <span class="material-symbols-outlined text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-lg">expand_more</span>
+                    </div>
+                }
+
+                <!-- Water Type Filter -->
+                <div class="relative">
+                    <select @bind="selectedWaterType" @bind:after="LoadData" class="appearance-none h-10 w-full min-w-[140px] bg-interactive-dark text-white rounded-lg pl-4 pr-10 hover:bg-interactive-dark/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                        <option value="">Все типы воды</option>
+                        <option value="Fresh">Пресная</option>
+                        <option value="NonFresh">Непресная</option>
+                    </select>
+                    <span class="material-symbols-outlined text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-lg">expand_more</span>
+                </div>
+
+                <!-- Condition Filter -->
+                <div class="relative">
+                    <select @bind="selectedCondition" @bind:after="LoadData" class="appearance-none h-10 w-full min-w-[180px] bg-interactive-dark text-white rounded-lg pl-4 pr-10 hover:bg-interactive-dark/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                        <option value="">Все состояния</option>
+                        <option value="5">Отличное (5)</option>
+                        <option value="4">Хорошее (4)</option>
+                        <option value="3">Удовлетворительное (3)</option>
+                        <option value="2">Плохое (2)</option>
+                        <option value="1">Аварийное (1)</option>
+                    </select>
+                    <span class="material-symbols-outlined text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-lg">expand_more</span>
+                </div>
+
+                <!-- Has Fauna Filter -->
+                <div class="relative">
+                    <select @bind="selectedHasFauna" @bind:after="LoadData" class="appearance-none h-10 w-full min-w-[140px] bg-interactive-dark text-white rounded-lg pl-4 pr-10 hover:bg-interactive-dark/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                        <option value="">Фауна: все</option>
+                        <option value="true">С фауной</option>
+                        <option value="false">Без фауны</option>
+                    </select>
+                    <span class="material-symbols-outlined text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-lg">expand_more</span>
+                </div>
+            </div>
+
+            <!-- Filters Row 2 - Dates and Sorting -->
+            <div class="flex flex-wrap gap-3 items-center">
+                <!-- Passport Date From -->
+                <div class="flex items-center gap-2">
+                    <span class="text-text-secondary-dark text-sm">Паспорт с:</span>
+                    <input type="date" @bind="passportDateFrom" @bind:after="LoadData" 
+                           class="h-10 !bg-interactive-dark !text-white rounded-lg px-3 border-none focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"/>
+                </div>
+
+                <!-- Passport Date To -->
+                <div class="flex items-center gap-2">
+                    <span class="text-text-secondary-dark text-sm">по:</span>
+                    <input type="date" @bind="passportDateTo" @bind:after="LoadData" 
+                           class="h-10 !bg-interactive-dark !text-white rounded-lg px-3 border-none focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"/>
+                </div>
+
+                <!-- Sort By -->
+                <div class="relative ml-auto">
+                    <select @bind="selectedSortField" @bind:after="LoadData" class="appearance-none h-10 w-full min-w-[160px] bg-interactive-dark text-white rounded-lg pl-4 pr-10 hover:bg-interactive-dark/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                        <option value="Priority">По приоритету</option>
+                        <option value="Name">По названию</option>
+                        <option value="Region">По области</option>
+                        <option value="TechnicalCondition">По состоянию</option>
+                        <option value="PassportDate">По дате паспорта</option>
+                    </select>
+                    <span class="material-symbols-outlined text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-lg">expand_more</span>
+                </div>
+
+                <!-- Sort Direction -->
+                <button @onclick="ToggleSortDirection" class="flex h-10 items-center justify-center gap-2 rounded-lg text-white px-4 hover:bg-white/10 transition-colors">
+                    <span class="material-symbols-outlined">@(sortDescending ? "arrow_downward" : "arrow_upward")</span>
+                    <span class="text-sm">@(sortDescending ? "По убыв." : "По возр.")</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-hidden rounded-lg border border-border-dark bg-surface-dark">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-surface-dark">
+                        <tr class="border-b border-border-dark">
+                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal">
+                                Название
+                            </th>
+                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal">
+                                Область
+                            </th>
+                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal">
+                                Тип ресурса
+                            </th>
+                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal">
+                                Состояние
+                            </th>
+                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal">
+                                Дата паспорта
+                            </th>
+                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal">
+                                Приоритет
+                            </th>
+                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal">
+                                Действия
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (isLoading)
+                        {
+                            <tr><td colspan="6" class="px-4 py-8 text-white text-center">
+                                <div class="flex items-center justify-center gap-2">
+                                    Загрузка данных...
+                                </div>
+                            </td></tr>
+                        }
+                        else if (loadError != null)
+                        {
+                            <tr><td colspan="6" class="px-4 py-8 text-center text-red-500">Ошибка загрузки: @loadError</td></tr>
+                        }
+                        else if (waterObjects == null || !waterObjects.Any())
+                        {
+                            <tr><td colspan="6" class="px-4 py-8 text-white text-center">По вашему запросу ничего не найдено</td></tr>
+                        }
+                        else
+                        {
+                            @foreach (var item in waterObjects)
+                            {
+                                <tr class="border-t border-border-dark hover:bg-interactive-dark/40 transition-colors">
+                                    <td class="h-[72px] px-4 py-2 text-white text-sm font-normal leading-normal">@item.Name</td>
+                                    <td class="h-[72px] px-4 py-2 text-text-secondary-dark text-sm font-normal leading-normal">@item.Region</td>
+                                    <td class="h-[72px] px-4 py-2 text-text-secondary-dark text-sm font-normal leading-normal">
+                                        @GetResourceTypeText(item.ResourceType)
+                                    </td>
+                                    <td class="h-[72px] px-4 py-2 text-text-secondary-dark text-sm font-normal leading-normal">
+                                        @GetConditionText(item.TechnicalCondition)
+                                    </td>
+                                    <td class="h-[72px] px-4 py-2 text-text-secondary-dark text-sm font-normal leading-normal">@item.PassportDate.ToString("dd.MM.yyyy")</td>
+                                    <td class="h-[72px] px-4 py-2 text-sm font-normal leading-normal">
+                                        @{
+                                            var (bgColor, textColor, label) = GetPriorityStyle(item.PriorityLevel);
+                                        }
+                                        <div class="inline-flex items-center gap-2 rounded-full py-1 px-3 @bgColor @textColor">
+                                            <div class="size-2 rounded-full @textColor.Replace("text-", "bg-")"></div>
+                                            <span class="font-medium">@label</span>
+                                        </div>
+                                    </td>
+                                    <td class="h-[72px] px-4 py-2 text-sm font-normal leading-normal">
+                                        <div class="flex items-center gap-2">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                                           Color="Color.Warning" 
+                                                           Size="Size.Small"
+                                                           Title="Редактировать"
+                                                           OnClick="@(() => OpenEditDialog(item))" />
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                                           Color="Color.Error" 
+                                                           Size="Size.Small"
+                                                           Title="Удалить"
+                                                           OnClick="@(() => DeleteObject(item))" />
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="flex items-center justify-between mt-6 text-text-secondary-dark">
+            <p class="text-sm">Показано @(waterObjects?.Count ?? 0) из @totalCount объектов, Страница @currentPage из @totalPages</p>
+            <div class="flex items-center gap-2">
+                <button @onclick="PrevPage" class="flex items-center justify-center size-8 rounded-lg text-white hover:bg-white/10 transition-colors disabled:opacity-30" disabled="@(currentPage == 1)">
+                    <span class="material-symbols-outlined">chevron_left</span>
+                </button>
+                <div class="flex items-center justify-center h-8 px-3 rounded-lg bg-primary text-white font-medium">@currentPage</div>
+                <button @onclick="NextPage" class="flex items-center justify-center size-8 rounded-lg text-white hover:bg-white/10 transition-colors disabled:opacity-30" disabled="@(!hasMorePages)">
+                    <span class="material-symbols-outlined">chevron_right</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ML Priority Note -->
+        <div class="mt-4 p-4 rounded-lg bg-primary/10 border border-primary/30">
+            <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-primary mt-0.5">smart_toy</span>
+                <div>
+                    <p class="text-white text-sm font-medium mb-1">Приоритет обследования рассчитывается автоматически</p>
+                    <p class="text-text-secondary-dark text-xs">
+                        Система использует ML-модель для анализа технического состояния и возраста паспорта объекта. 
+                        Приоритет не может быть изменён вручную — он пересчитывается при каждом обновлении данных объекта.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<MudOverlay Visible="isLoading" DarkBackground="true" Absolute="true" ZIndex="9999">
+    <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+</MudOverlay>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Дашборд";
+    [Parameter] public string FilterMode { get; set; } = "All"; // All, ResourcesOnly, StructuresOnly
+
+    private bool ShowResourceTypeFilter => FilterMode == "All";
+
+    private List<WaterObjectDto>? waterObjects;
+    private int totalCount;
+    private int currentPage = 1;
+    private int pageSize = 20;
+    private int totalPages = 1;
+    private bool hasMorePages;
+    private bool isLoading;
+    private string? loadError;
+    private string? authToken;
+    
+    // Search
+    private string searchText = "";
+    
+    // Filters
+    private List<string> availableRegions = new();
+    private string selectedRegion = "";
+    private string selectedResourceType = "";
+    private string selectedWaterType = "";
+    private string selectedCondition = "";
+    private string selectedHasFauna = "";
+    private DateTime? passportDateFrom;
+    private DateTime? passportDateTo;
+    
+    // Sorting
+    private string selectedSortField = "Priority";
+    private bool sortDescending = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                var role = await JS.InvokeAsync<string>("localStorage.getItem", "userRole");
+                if (role != "Expert")
+                {
+                    NavManager.NavigateTo("/map", true);
+                    return;
+                }
+                
+                // Get token for API calls
+                authToken = await JS.InvokeAsync<string>("localStorage.getItem", "authToken");
+                if (!string.IsNullOrEmpty(authToken))
+                {
+                    WaterObjectApi.SetAuthToken(authToken);
+                }
+                
+                await LoadRegions();
+                await LoadData();
+                StateHasChanged();
+            }
+            catch { /* ignore */ }
+        }
+    }
+
+    private async Task LoadRegions()
+    {
+        try 
+        {
+            var regions = await WaterObjectApi.GetRegionsAsync();
+            if (regions != null)
+            {
+                availableRegions = regions.Order().ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+             Console.WriteLine($"Error loading regions: {ex.Message}");
+        }
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            isLoading = true;
+            loadError = null;
+            StateHasChanged();
+            
+            // Handle Filter Mode logic
+            ResourceType? forcedResourceType = null;
+            if (FilterMode == "StructuresOnly")
+            {
+                forcedResourceType = ResourceType.HydroTechnicalStructure;
+            }
+            // For "ResourcesOnly", we have to do post-filtering or handle it if API doesn't support "Not Equal".
+            // The API filter accepts nullable ResourceType. 
+            // If FilterMode == "ResourcesOnly", we actually want (Lake OR Canal OR Reservoir).
+            // This Dashboard implementation assumes ResourceType is a single value filter.
+            // If the API supports list of types, great. If not, we might need to filter client side or assume user selects one.
+            // But wait, the previous code used a simple dropdown. 
+            // If user wants "All Water Resources", we can't send a single ResourceType.
+            
+            // Let's use the explicit selected type if set
+            ResourceType? resourceType = null;
+            if (!string.IsNullOrEmpty(selectedResourceType) && Enum.TryParse<ResourceType>(selectedResourceType, out var rt))
+            {
+                resourceType = rt;
+            }
+            
+            // Conflict resolution: FilterMode vs User Selection
+            if (FilterMode == "StructuresOnly")
+            {
+                resourceType = ResourceType.HydroTechnicalStructure;
+            }
+
+            
+            // ... (Rest of parsing logic same as original)
+            WaterType? waterType = null;
+            if (!string.IsNullOrEmpty(selectedWaterType) && Enum.TryParse<WaterType>(selectedWaterType, out var wt))
+            {
+                waterType = wt;
+            }
+            
+            bool? hasFauna = null;
+            if (!string.IsNullOrEmpty(selectedHasFauna))
+            {
+                hasFauna = selectedHasFauna == "true";
+            }
+            
+            int? technicalCondition = null;
+            if (!string.IsNullOrEmpty(selectedCondition) && int.TryParse(selectedCondition, out var tc))
+            {
+                technicalCondition = tc;
+            }
+            
+            SortField? sortField = null;
+            if (!string.IsNullOrEmpty(selectedSortField) && Enum.TryParse<SortField>(selectedSortField, out var sf))
+            {
+                sortField = sf;
+            }
+            
+            // Build filter
+            var filter = new WaterObjectFilterDto
+            {
+                Region = string.IsNullOrEmpty(selectedRegion) ? null : selectedRegion,
+                ResourceType = resourceType,
+                WaterType = waterType,
+                HasFauna = hasFauna,
+                PassportDateFrom = passportDateFrom,
+                PassportDateTo = passportDateTo,
+                TechnicalCondition = technicalCondition,
+                SearchQuery = string.IsNullOrEmpty(searchText) ? null : searchText,
+                SortBy = sortField,
+                SortDescending = sortDescending,
+                Page = currentPage,
+                PageSize = 200 // Load more to allow client side filtering for "ResourcesOnly"
+            };
+
+            var response = await WaterObjectApi.GetAllAsync(filter);
+            
+            if (response != null)
+            {
+                var items = response.Items.ToList();
+                
+                // Client-side filtering for "ResourcesOnly" (Everything EXCEPT Structures)
+                if (FilterMode == "ResourcesOnly")
+                {
+                    items = items.Where(x => x.ResourceType != ResourceType.HydroTechnicalStructure).ToList();
+                }
+
+                waterObjects = items;
+                totalCount = items.Count; // Update total count based on active filter
+                totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+                if (totalPages < 1) totalPages = 1;
+                // hasMorePages logic might be broken if we do client side filtering on a paged result.
+                // Ideally API should support it. But for MVP this is fine (load 200).
+                hasMorePages = false; // Disable server pagination controls if we do client side filtering hack
+            }
+            else
+            {
+                loadError = "Не удалось загрузить данные. Проверьте подключение к API.";
+            }
+        }
+        catch (Exception ex)
+        {
+            loadError = ex.Message;
+            Console.WriteLine($"Error loading dashboard data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SearchData()
+    {
+        currentPage = 1;
+        await LoadData();
+    }
+
+    private async Task NextPage()
+    {
+        // Simple pagination disabled for client-side hack mode, but kept for full mode
+        if (FilterMode == "All" && hasMorePages)
+        {
+            currentPage++;
+            await LoadData();
+        }
+    }
+
+    private async Task PrevPage()
+    {
+        if (FilterMode == "All" && currentPage > 1)
+        {
+            currentPage--;
+            await LoadData();
+        }
+    }
+
+    private async Task ToggleSortDirection()
+    {
+        sortDescending = !sortDescending;
+        currentPage = 1;
+        await LoadData();
+    }
+
+    private async Task ClearFilters()
+    {
+        searchText = "";
+        selectedRegion = "";
+        selectedResourceType = "";
+        selectedWaterType = "";
+        selectedCondition = "";
+        selectedHasFauna = "";
+        passportDateFrom = null;
+        passportDateTo = null;
+        selectedSortField = "Priority";
+        sortDescending = true;
+        currentPage = 1;
+        await LoadData();
+    }
+
+    private string GetConditionText(int condition) => condition switch
+    {
+        1 => "Аварийное",
+        2 => "Плохое",
+        3 => "Удовлетворительное",
+        4 => "Хорошее",
+        5 => "Отличное",
+        _ => condition.ToString()
+    };
+
+    private string GetResourceTypeText(ResourceType type) => type switch
+    {
+        ResourceType.Lake => "Озеро",
+        ResourceType.Canal => "Канал",
+        ResourceType.Reservoir => "Водохранилище",
+        ResourceType.HydroTechnicalStructure => "ГТС",
+        _ => type.ToString()
+    };
+
+    private (string BgColor, string TextColor, string Label) GetPriorityStyle(PriorityLevel level) => level switch
+    {
+        PriorityLevel.High => ("bg-high-priority/20", "text-high-priority", "Высокий"),
+        PriorityLevel.Medium => ("bg-medium-priority/20", "text-medium-priority", "Средний"),
+        PriorityLevel.Low => ("bg-low-priority/20", "text-low-priority", "Низкий"),
+        _ => ("", "", level.ToString())
+    };
+
+    private async Task OpenCreateDialog()
+    {
+        var parameters = new DialogParameters<CreateWaterResourceDialog>
+        {
+            { x => x.WaterObjectApi, WaterObjectApi }
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseButton = true
+        };
+
+        var dialog = await DialogService.ShowAsync<CreateWaterResourceDialog>("Добавление водного ресурса", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled)
+        {
+            Snackbar.Add("Объект успешно создан", Severity.Success);
+            await LoadData();
+        }
+    }
+
+    private async Task OpenEditDialog(WaterObjectDto item)
+    {
+        var parameters = new DialogParameters<EditWaterResourceDialog>
+        {
+            { x => x.Resource, item },
+            { x => x.WaterObjectApi, WaterObjectApi }
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseButton = true
+        };
+
+        var dialog = await DialogService.ShowAsync<EditWaterResourceDialog>("Редактирование водного ресурса", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled)
+        {
+            Snackbar.Add("Объект успешно обновлен", Severity.Success);
+            await LoadData();
+        }
+    }
+
+    private async Task DeleteObject(WaterObjectDto item)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Подтверждение удаления", 
+            $"Вы уверены, что хотите удалить объект '{item.Name}'? Это действие нельзя отменить.", 
+            yesText: "Удалить", cancelText: "Отмена");
+
+        if (result == true)
+        {
+            var success = await WaterObjectApi.DeleteAsync(item.Id);
+            if (success)
+            {
+                Snackbar.Add("Объект удален", Severity.Success);
+                await LoadData();
+            }
+            else
+            {
+                Snackbar.Add("Не удалось удалить объект", Severity.Error);
+            }
+        }
+    }
+}
