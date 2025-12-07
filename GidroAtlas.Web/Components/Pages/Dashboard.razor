@@ -5,6 +5,8 @@
 @inject IWaterObjectApiService WaterObjectApi
 @inject NavigationManager NavManager
 @inject IJSRuntime JS
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
 
 <PageTitle>Дашборд приоритезации</PageTitle>
 
@@ -49,8 +51,14 @@
 <!-- Content Wrapper -->
 <div class="dashboard-body bg-background-light dark:bg-background-dark font-display p-8">
     <div class="max-w-7xl mx-auto">
-        <header class="mb-6">
+        <header class="mb-6 flex justify-between items-center">
             <p class="text-white text-4xl font-black leading-tight tracking-[-0.033em]">Дашборд приоритезации</p>
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="OpenCreateDialog">
+                Добавить объект
+            </MudButton>
         </header>
 
         <!-- Search Bar -->
@@ -195,6 +203,9 @@
                             <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal">
                                 Приоритет
                             </th>
+                            <th class="px-4 py-3 text-left text-white text-sm font-medium leading-normal">
+                                Действия
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -236,6 +247,20 @@
                                         <div class="inline-flex items-center gap-2 rounded-full py-1 px-3 @bgColor @textColor">
                                             <div class="size-2 rounded-full @textColor.Replace("text-", "bg-")"></div>
                                             <span class="font-medium">@label</span>
+                                        </div>
+                                    </td>
+                                    <td class="h-[72px] px-4 py-2 text-sm font-normal leading-normal">
+                                        <div class="flex items-center gap-2">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Edit" 
+                                                           Color="Color.Warning" 
+                                                           Size="Size.Small"
+                                                           Title="Редактировать"
+                                                           OnClick="@(() => OpenEditDialog(item))" />
+                                            <MudIconButton Icon="@Icons.Material.Filled.Delete" 
+                                                           Color="Color.Error" 
+                                                           Size="Size.Small"
+                                                           Title="Удалить"
+                                                           OnClick="@(() => DeleteObject(item))" />
                                         </div>
                                     </td>
                                 </tr>
@@ -581,4 +606,75 @@
         PriorityLevel.Low => ("bg-low-priority/20", "text-low-priority", "Низкий"),
         _ => ("", "", level.ToString())
     };
+
+    private async Task OpenCreateDialog()
+    {
+        var parameters = new DialogParameters<CreateWaterResourceDialog>
+        {
+            { x => x.WaterObjectApi, WaterObjectApi }
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseButton = true
+        };
+
+        var dialog = await DialogService.ShowAsync<CreateWaterResourceDialog>("Добавление водного ресурса", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled)
+        {
+            Snackbar.Add("Объект успешно создан", Severity.Success);
+            await LoadData();
+        }
+    }
+
+    private async Task OpenEditDialog(WaterObjectDto item)
+    {
+        var parameters = new DialogParameters<EditWaterResourceDialog>
+        {
+            { x => x.Resource, item },
+            { x => x.WaterObjectApi, WaterObjectApi }
+        };
+
+        var options = new DialogOptions
+        {
+            MaxWidth = MaxWidth.Medium,
+            FullWidth = true,
+            CloseButton = true
+        };
+
+        var dialog = await DialogService.ShowAsync<EditWaterResourceDialog>("Редактирование водного ресурса", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result!.Canceled)
+        {
+            Snackbar.Add("Объект успешно обновлен", Severity.Success);
+            await LoadData();
+        }
+    }
+
+    private async Task DeleteObject(WaterObjectDto item)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Подтверждение удаления", 
+            $"Вы уверены, что хотите удалить объект '{item.Name}'? Это действие нельзя отменить.", 
+            yesText: "Удалить", cancelText: "Отмена");
+
+        if (result == true)
+        {
+            var success = await WaterObjectApi.DeleteAsync(item.Id);
+            if (success)
+            {
+                Snackbar.Add("Объект удален", Severity.Success);
+                await LoadData();
+            }
+            else
+            {
+                Snackbar.Add("Не удалось удалить объект", Severity.Error);
+            }
+        }
+    }
 }
