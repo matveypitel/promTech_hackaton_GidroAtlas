@@ -49,7 +49,7 @@
 </style>
 
 <!-- Content Wrapper -->
-<div class="dashboard-body bg-background-light dark:bg-background-dark font-display p-8">
+<div class="dashboard-body bg-background-dark font-display p-8 min-h-screen">
     <div class="max-w-7xl mx-auto">
         <header class="mb-6 flex justify-between items-center">
             <p class="text-white text-4xl font-black leading-tight tracking-[-0.033em]">Дашборд приоритезации</p>
@@ -70,7 +70,7 @@
                             <div class="text-text-secondary-dark flex bg-interactive-dark items-center justify-center pl-4 rounded-l-lg">
                                 <span class="material-symbols-outlined">search</span>
                             </div>
-                            <input @bind="searchText" @bind:event="oninput" @onkeyup="SearchData" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-lg text-dark focus:outline-0 focus:ring-2 focus:ring-primary focus:ring-inset border-none bg-interactive-dark h-full placeholder:text-text-secondary-dark px-4 text-base font-normal leading-normal" placeholder="Поиск по названию объекта"/>
+                            <input @bind="searchText" @bind:event="oninput" @onkeyup="SearchData" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-lg !text-white focus:outline-0 focus:ring-2 focus:ring-primary focus:ring-inset border-none !bg-interactive-dark h-full placeholder:text-text-secondary-dark px-4 text-base font-normal leading-normal" placeholder="Поиск по названию объекта"/>
                         </div>
                     </label>
                 </div>
@@ -149,14 +149,14 @@
                 <div class="flex items-center gap-2">
                     <span class="text-text-secondary-dark text-sm">Паспорт с:</span>
                     <input type="date" @bind="passportDateFrom" @bind:after="LoadData" 
-                           class="h-10 bg-interactive-dark text-dark rounded-lg px-3 border-none focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"/>
+                           class="h-10 !bg-interactive-dark !text-white rounded-lg px-3 border-none focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"/>
                 </div>
 
                 <!-- Passport Date To -->
                 <div class="flex items-center gap-2">
                     <span class="text-text-secondary-dark text-sm">по:</span>
                     <input type="date" @bind="passportDateTo" @bind:after="LoadData" 
-                           class="h-10 bg-interactive-dark text-dark rounded-lg px-3 border-none focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"/>
+                           class="h-10 !bg-interactive-dark !text-white rounded-lg px-3 border-none focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"/>
                 </div>
 
                 <!-- Sort By -->
