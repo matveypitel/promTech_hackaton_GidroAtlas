@@ -107,6 +107,10 @@ services:
       - Ollama__BaseUrl=http://ollama:11434
       - Ollama__ChatModel=qwen3:4b
       - Ollama__EmbeddingModel=nomic-embed-text
+      - Ollama__TimeoutSeconds=60
+      - Ollama__Temperature=0.3
+      - Ollama__MaxTokens=512
+      - Ollama__NumCtx=4096
       - CorsSettings__AllowedOrigins__0=http://web:8080
       - PASPORTS_PATH=/src
     volumes:

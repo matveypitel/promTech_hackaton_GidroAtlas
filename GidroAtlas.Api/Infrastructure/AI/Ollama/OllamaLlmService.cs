@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using GidroAtlas.Api.Infrastructure.AI.Abstractions;
 using GidroAtlas.Api.Options;
@@ -144,22 +145,40 @@ public partial class OllamaLlmService : ILlmService
 
     private class OllamaChatRequest
     {
+        [JsonPropertyName("model")]
         public required string Model { get; init; }
+        
+        [JsonPropertyName("messages")]
         public required List<OllamaChatMessage> Messages { get; init; }
+        
+        [JsonPropertyName("stream")]
         public bool Stream { get; init; }
+        
+        [JsonPropertyName("think")]
+        public bool Think { get; init; } = false; // Disable thinking mode for faster responses
+        
+        [JsonPropertyName("options")]
         public OllamaOptions? Options { get; init; }
     }
 
     private class OllamaChatMessage
     {
+        [JsonPropertyName("role")]
         public required string Role { get; init; }
+        
+        [JsonPropertyName("content")]
         public required string Content { get; init; }
     }
 
     private class OllamaOptions
     {
+        [JsonPropertyName("temperature")]
         public float Temperature { get; init; }
+        
+        [JsonPropertyName("num_predict")]
         public int NumPredict { get; init; }
+        
+        [JsonPropertyName("num_ctx")]
         public int NumCtx { get; init; }
     }
 

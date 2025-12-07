@@ -17,7 +17,7 @@ public class ChatService : IChatService
     private readonly IEmbeddingService _embeddingService;
     private readonly ILogger<ChatService> _logger;
 
-    private const int DefaultTopK = 5; // Number of similar documents to retrieve (lower = faster)
+    private const int DefaultTopK = 3; // Number of similar documents to retrieve (lower = faster)
     private const double HighRelevanceThreshold = 0.6; // Consider context highly relevant above this
 
     public ChatService(
