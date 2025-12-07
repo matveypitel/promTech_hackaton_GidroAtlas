@@ -4,11 +4,11 @@
 @using GidroAtlas.Web.Interfaces
 @inject IAuthApiService AuthService
 
-<MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
+<MudThemeProvider Theme="@_theme" IsDarkMode="true" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
-<MudLayout Class="@( _isDarkMode ? "dark" : "" )">
+<MudLayout Class="dark">
     <MudAppBar Elevation="1">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         <MudText Typo="Typo.h5" Class="ml-3">Application</MudText>
@@ -25,7 +25,7 @@
             </MudTooltip>
         }
         
-        <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
+
         
         <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Class="ml-2">
             <ActivatorContent>
@@ -65,7 +65,6 @@
 
 @code {
     private bool _drawerOpen = true;
-    private bool _isDarkMode = true;
     private bool _isChatOpen = false;
     private bool _isExpert = false;
     private MudTheme? _theme = null;
@@ -76,7 +75,6 @@
 
         _theme = new()
         {
-            PaletteLight = _lightPalette,
             PaletteDark = _darkPalette,
             LayoutProperties = new LayoutProperties()
         };
@@ -87,54 +85,33 @@
         _drawerOpen = !_drawerOpen;
     }
 
-    private void DarkModeToggle()
-    {
-        _isDarkMode = !_isDarkMode;
-    }
-
-    private readonly PaletteLight _lightPalette = new()
-    {
-        Black = "#110e2d",
-        AppbarText = "#424242",
-        AppbarBackground = "rgba(255,255,255,0.8)",
-        DrawerBackground = "#ffffff",
-        GrayLight = "#e8e8e8",
-        GrayLighter = "#f9f9f9",
-    };
-
     private readonly PaletteDark _darkPalette = new()
     {
-        Primary = "#7e6fff",
-        Surface = "#1e1e2d",
-        Background = "#1a1a27",
-        BackgroundGray = "#151521",
-        AppbarText = "#92929f",
-        AppbarBackground = "rgba(26,26,39,0.8)",
-        DrawerBackground = "#1a1a27",
-        ActionDefault = "#74718e",
-        ActionDisabled = "#9999994d",
-        ActionDisabledBackground = "#605f6d4d",
-        TextPrimary = "#b2b0bf",
-        TextSecondary = "#92929f",
+        Primary = "#137fec",
+        Surface = "#192633",
+        Background = "#101922",
+        BackgroundGray = "#0d1419",
+        AppbarText = "#92adc9",
+        AppbarBackground = "rgba(16,25,34,0.95)",
+        DrawerBackground = "#192633",
+        ActionDefault = "#92adc9",
+        ActionDisabled = "#324d674d",
+        ActionDisabledBackground = "#2336484d",
+        TextPrimary = "#ffffff",
+        TextSecondary = "#92adc9",
         TextDisabled = "#ffffff33",
-        DrawerIcon = "#92929f",
-        DrawerText = "#92929f",
-        GrayLight = "#2a2833",
-        GrayLighter = "#1e1e2d",
-        Info = "#4a86ff",
-        Success = "#3dcb6c",
-        Warning = "#ffb545",
-        Error = "#ff3f5f",
-        LinesDefault = "#33323e",
-        TableLines = "#33323e",
-        Divider = "#292838",
-        OverlayLight = "#1e1e2d80",
-    };
-
-    public string DarkLightModeButtonIcon => _isDarkMode switch
-    {
-        true => Icons.Material.Rounded.AutoMode,
-        false => Icons.Material.Outlined.DarkMode,
+        DrawerIcon = "#92adc9",
+        DrawerText = "#92adc9",
+        GrayLight = "#233648",
+        GrayLighter = "#192633",
+        Info = "#137fec",
+        Success = "#388E3C",
+        Warning = "#FFA000",
+        Error = "#D32F2F",
+        LinesDefault = "#324d67",
+        TableLines = "#324d67",
+        Divider = "#324d67",
+        OverlayLight = "#10192280",
     };
 
     private string UserName = "Guest";
