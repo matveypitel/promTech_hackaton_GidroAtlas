@@ -4,11 +4,11 @@
 @using GidroAtlas.Web.Interfaces
 @inject IAuthApiService AuthService
 
-<MudThemeProvider Theme="@_theme" IsDarkMode="_isDarkMode" />
+<MudThemeProvider Theme="@_theme" IsDarkMode="true" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
-<MudLayout Class="@( _isDarkMode ? "dark" : "" )">
+<MudLayout Class="dark">
     <MudAppBar Elevation="1">
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
         <div class="d-flex align-center gap-2 ml-3">
@@ -28,7 +28,7 @@
             </MudTooltip>
         }
         
-        <MudIconButton Icon="@(DarkLightModeButtonIcon)" Color="Color.Inherit" OnClick="@DarkModeToggle" />
+
         
         <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Class="ml-2">
             <ActivatorContent>
@@ -68,7 +68,6 @@
 
 @code {
     private bool _drawerOpen = true;
-    private bool _isDarkMode = true;
     private bool _isChatOpen = false;
     private bool _isExpert = false;
     private MudTheme? _theme = null;
@@ -79,7 +78,6 @@
 
         _theme = new()
         {
-            PaletteLight = _lightPalette,
             PaletteDark = _darkPalette,
             LayoutProperties = new LayoutProperties()
         };
@@ -89,21 +87,6 @@
     {
         _drawerOpen = !_drawerOpen;
     }
-
-    private void DarkModeToggle()
-    {
-        _isDarkMode = !_isDarkMode;
-    }
-
-    private readonly PaletteLight _lightPalette = new()
-    {
-        Black = "#110e2d",
-        AppbarText = "#424242",
-        AppbarBackground = "rgba(255,255,255,0.8)",
-        DrawerBackground = "#ffffff",
-        GrayLight = "#e8e8e8",
-        GrayLighter = "#f9f9f9",
-    };
 
     private readonly PaletteDark _darkPalette = new()
     {
@@ -121,7 +104,7 @@
         TextSecondary = "#92adc9",
         TextDisabled = "#ffffff33",
         DrawerIcon = "#92adc9",
-        DrawerText = "#ffffff",
+        DrawerText = "#92adc9",
         GrayLight = "#233648",
         GrayLighter = "#192633",
         Info = "#137fec",
@@ -132,12 +115,6 @@
         TableLines = "#324d67",
         Divider = "#324d67",
         OverlayLight = "#10192280",
-    };
-
-    public string DarkLightModeButtonIcon => _isDarkMode switch
-    {
-        true => Icons.Material.Rounded.AutoMode,
-        false => Icons.Material.Outlined.DarkMode,
     };
 
     private string UserName = "Guest";
