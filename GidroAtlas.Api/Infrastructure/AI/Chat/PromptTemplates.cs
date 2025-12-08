@@ -26,7 +26,6 @@ public static class PromptTemplates
         - Будь информативным, но лаконичным
         - Если не уверен в ответе, честно скажи об этом
         
-        /no-thinking
         """;
 
     /// <summary>

@@ -101,6 +101,11 @@
     
     <div class="chat-input-area">
         <div class="chat-input-container">
+            <MudIconButton Icon="@Icons.Material.Filled.AttachFile" 
+                           Color="Color.Default"
+                           Size="Size.Medium"
+                           Class="attach-button"
+                           Title="Прикрепить документ" />
             <MudTextField @bind-Value="_inputMessage" 
                           Placeholder="Задайте вопрос о водных ресурсах..."
                           Variant="Variant.Outlined"
@@ -473,6 +478,25 @@
     
     .send-button .mud-icon-root {
         color: white !important;
+    }
+    
+    .attach-button {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px !important;
+        transition: all 0.2s ease !important;
+    }
+    
+    .attach-button .mud-icon-root {
+        color: #92adc9 !important;
+    }
+    
+    .attach-button:hover {
+        background: rgba(19, 127, 236, 0.2) !important;
+    }
+    
+    .attach-button:hover .mud-icon-root {
+        color: #137fec !important;
     }
     
     /* Dark mode overlay */

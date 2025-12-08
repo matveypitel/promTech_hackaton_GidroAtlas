@@ -9,16 +9,99 @@
 
 <PageTitle>Карта водных ресурсов</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="mt-4">
-    <MudText Typo="Typo.h4" Class="mb-4">Карта водных ресурсов Казахстана</MudText>
+<div class="map-page bg-background-dark font-display p-6 min-h-screen">
+    <div class="max-w-full mx-auto">
+        <header class="mb-4">
+            <p class="text-white text-3xl font-black leading-tight tracking-[-0.033em]">Карта водных ресурсов Казахстана</p>
+        </header>
 
-    @if (loadError != null)
-    {
-        <MudAlert Severity="Severity.Error" Class="mb-4">Ошибка загрузки данных: @loadError</MudAlert>
-    }
+        @if (loadError != null)
+        {
+            <MudAlert Severity="Severity.Error" Class="mb-4">Ошибка загрузки данных: @loadError</MudAlert>
+        }
 
-    <MudPaper Elevation="3" Class="pa-4">
-        <MudStack Row="true" Class="mb-4" AlignItems="AlignItems.Center" Justify="Justify.Center">
+        <!-- Search and Filter Panel -->
+        <div class="flex flex-col gap-4 mb-4">
+            <div class="flex flex-col md:flex-row gap-4 items-center">
+                <div class="flex-grow w-full md:w-auto">
+                    <label class="flex flex-col min-w-40 h-12 w-full">
+                        <div class="flex w-full flex-1 items-stretch rounded-lg h-full">
+                            <div class="text-text-secondary-dark flex bg-interactive-dark items-center justify-center pl-4 rounded-l-lg">
+                                <span class="material-symbols-outlined">search</span>
+                            </div>
+                            <input @bind="searchText" @bind:event="oninput" @onkeyup="ApplyFilters" class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-r-lg !text-white focus:outline-0 focus:ring-2 focus:ring-primary focus:ring-inset border-none !bg-interactive-dark h-full placeholder:text-text-secondary-dark px-4 text-base font-normal leading-normal" placeholder="Поиск по названию объекта"/>
+                        </div>
+                    </label>
+                </div>
+                <button @onclick="RefreshData" class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-primary/20 text-primary px-4 hover:bg-primary/30 transition-colors">
+                    <span class="material-symbols-outlined text-sm">refresh</span>
+                    <p class="text-sm font-medium">Обновить</p>
+                </button>
+                <button @onclick="ClearFilters" class="flex h-10 shrink-0 items-center justify-center gap-x-2 rounded-lg bg-red-500/20 text-red-400 px-4 hover:bg-red-500/30 transition-colors">
+                    <span class="material-symbols-outlined text-sm">filter_alt_off</span>
+                    <p class="text-sm font-medium">Сбросить</p>
+                </button>
+            </div>
+            
+            <!-- Filters Row -->
+            <div class="flex flex-wrap gap-3 items-center">
+                <!-- Region Filter -->
+                <div class="relative">
+                    <select @bind="selectedRegion" @bind:after="ApplyFilters" class="appearance-none h-10 w-full min-w-[140px] bg-interactive-dark text-white rounded-lg pl-4 pr-10 hover:bg-interactive-dark/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                        <option value="">Все области</option>
+                        @foreach (var region in availableRegions)
+                        {
+                            <option value="@region">@region</option>
+                        }
+                    </select>
+                    <span class="material-symbols-outlined text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-lg">expand_more</span>
+                </div>
+
+                <!-- Water Type Filter -->
+                <div class="relative">
+                    <select @bind="selectedWaterType" @bind:after="ApplyFilters" class="appearance-none h-10 w-full min-w-[140px] bg-interactive-dark text-white rounded-lg pl-4 pr-10 hover:bg-interactive-dark/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                        <option value="">Все типы воды</option>
+                        <option value="Fresh">Пресная</option>
+                        <option value="NonFresh">Непресная</option>
+                    </select>
+                    <span class="material-symbols-outlined text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-lg">expand_more</span>
+                </div>
+
+                @if (isExpert)
+                {
+                    <!-- Condition Filter -->
+                    <div class="relative">
+                        <select @bind="selectedCondition" @bind:after="ApplyFilters" class="appearance-none h-10 w-full min-w-[180px] bg-interactive-dark text-white rounded-lg pl-4 pr-10 hover:bg-interactive-dark/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                            <option value="">Все состояния</option>
+                            <option value="1">Отличное (1)</option>
+                            <option value="2">Хорошее (2)</option>
+                            <option value="3">Удовлетворительное (3)</option>
+                            <option value="4">Неудовлетворительное (4)</option>
+                            <option value="5">Критическое (5)</option>
+                        </select>
+                        <span class="material-symbols-outlined text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-lg">expand_more</span>
+                    </div>
+                }
+
+                <!-- Has Fauna Filter -->
+                <div class="relative">
+                    <select @bind="selectedHasFauna" @bind:after="ApplyFilters" class="appearance-none h-10 w-full min-w-[140px] bg-interactive-dark text-white rounded-lg pl-4 pr-10 hover:bg-interactive-dark/80 transition-colors focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer">
+                        <option value="">Фауна: все</option>
+                        <option value="true">С фауной</option>
+                        <option value="false">Без фауны</option>
+                    </select>
+                    <span class="material-symbols-outlined text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-lg">expand_more</span>
+                </div>
+
+                <!-- Results counter -->
+                <div class="ml-auto text-text-secondary-dark text-sm">
+                    Показано объектов: <span class="text-white font-medium">@displayedObjects.Count</span> из @allWaterObjects.Count
+                </div>
+            </div>
+        </div>
+
+        <!-- Layer Toggle -->
+        <div class="flex justify-center mb-4">
             <MudToggleGroup T="string" Value="@selectedLayer" ValueChanged="@OnLayerChanged" Color="Color.Primary" CheckMark="true" FixedContent="true">
                 <MudToggleItem Value="@("resources")">
                     <MudStack Row="true" Spacing="2">
@@ -33,10 +116,12 @@
                     </MudStack>
                 </MudToggleItem>
             </MudToggleGroup>
-        </MudStack>
-        
-        <div id="map" style="height:600px; width:100%; border-radius: 8px;"></div>
-    </MudPaper>
+        </div>
+
+        <!-- Map Container -->
+        <div class="rounded-xl overflow-hidden border border-border-dark bg-surface-dark">
+            <div id="map" style="height:600px; width:100%;"></div>
+        </div>
 
     @* Легенда карты *@
     @if (isExpert)
@@ -151,7 +236,8 @@
             }
         </style>
     }
-</MudContainer>
+    </div>
+</div>
 
 @code {
     private DotNetObjectReference<Map>? dotNetHelper;
@@ -161,12 +247,20 @@
     private bool isExpert;
     private string? authToken;
     private string selectedLayer = "resources"; // "resources" or "structures"
+    
+    // Search and Filter variables
+    private string searchText = "";
+    private List<string> availableRegions = new();
+    private string selectedRegion = "";
+    private string selectedWaterType = "";
+    private string selectedCondition = "";
+    private string selectedHasFauna = "";
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            // Now that we have seeded DB, we can load everything from API
+            // Load all data from API
             var response = await WaterObjectApi.GetAllAsync(new WaterObjectFilterDto 
             { 
                 PageSize = 2000 // Load enough to cover all
@@ -175,6 +269,13 @@
             if (response != null && response.Items != null)
             {
                 allWaterObjects = response.Items.ToList();
+                // Extract unique regions for filter dropdown
+                availableRegions = allWaterObjects
+                    .Select(x => x.Region)
+                    .Where(r => !string.IsNullOrEmpty(r))
+                    .Distinct()
+                    .Order()
+                    .ToList();
             }
             
             FilterObjects();
@@ -191,22 +292,106 @@
         selectedLayer = layer;
         FilterObjects();
         _ = UpdateMapMarkers();
+        StateHasChanged();
     }
 
     private void FilterObjects()
     {
+        IEnumerable<WaterObjectDto> filtered = allWaterObjects;
+        
+        // Filter by layer (resources vs structures)
         if (selectedLayer == "structures")
         {
-            displayedObjects = allWaterObjects
-                .Where(x => x.ResourceType == ResourceType.HydroTechnicalStructure)
-                .ToList();
+            filtered = filtered.Where(x => x.ResourceType == ResourceType.HydroTechnicalStructure);
         }
         else
         {
-            displayedObjects = allWaterObjects
-                .Where(x => x.ResourceType != ResourceType.HydroTechnicalStructure)
-                .ToList();
+            filtered = filtered.Where(x => x.ResourceType != ResourceType.HydroTechnicalStructure);
         }
+        
+        // Search by name
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            filtered = filtered.Where(x => x.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase));
+        }
+        
+        // Filter by region
+        if (!string.IsNullOrEmpty(selectedRegion))
+        {
+            filtered = filtered.Where(x => x.Region == selectedRegion);
+        }
+        
+        // Filter by water type
+        if (!string.IsNullOrEmpty(selectedWaterType) && Enum.TryParse<WaterType>(selectedWaterType, out var wt))
+        {
+            filtered = filtered.Where(x => x.WaterType == wt);
+        }
+        
+        // Filter by technical condition
+        if (!string.IsNullOrEmpty(selectedCondition) && int.TryParse(selectedCondition, out var condition))
+        {
+            filtered = filtered.Where(x => x.TechnicalCondition == condition);
+        }
+        
+        // Filter by fauna
+        if (!string.IsNullOrEmpty(selectedHasFauna))
+        {
+            bool hasFauna = selectedHasFauna == "true";
+            filtered = filtered.Where(x => x.HasFauna == hasFauna);
+        }
+        
+        displayedObjects = filtered.ToList();
+    }
+    
+    private async Task ApplyFilters()
+    {
+        FilterObjects();
+        await UpdateMapMarkers();
+        StateHasChanged();
+    }
+    
+    private async Task RefreshData()
+    {
+        try
+        {
+            loadError = null;
+            var response = await WaterObjectApi.GetAllAsync(new WaterObjectFilterDto 
+            { 
+                PageSize = 2000
+            });
+            
+            if (response != null && response.Items != null)
+            {
+                allWaterObjects = response.Items.ToList();
+                availableRegions = allWaterObjects
+                    .Select(x => x.Region)
+                    .Where(r => !string.IsNullOrEmpty(r))
+                    .Distinct()
+                    .Order()
+                    .ToList();
+            }
+            
+            FilterObjects();
+            await UpdateMapMarkers();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            loadError = ex.Message;
+            Console.WriteLine($"Error refreshing map data: {ex.Message}");
+        }
+    }
+    
+    private async Task ClearFilters()
+    {
+        searchText = "";
+        selectedRegion = "";
+        selectedWaterType = "";
+        selectedCondition = "";
+        selectedHasFauna = "";
+        FilterObjects();
+        await UpdateMapMarkers();
+        StateHasChanged();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

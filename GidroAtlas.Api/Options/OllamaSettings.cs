@@ -13,7 +13,7 @@ public class OllamaSettings
     /// <summary>
     /// Model name for chat/generation (e.g., qwen3:4b)
     /// </summary>
-    public string ChatModel { get; set; } = "qwen3:4b";
+    public string ChatModel { get; set; } = "ministral-3:3b";
 
     /// <summary>
     /// Model name for embeddings (e.g., nomic-embed-text)

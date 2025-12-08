@@ -79,6 +79,8 @@ services:
     command:
       - -c
       - |
+        echo "Pulling gemma3:4b model..."
+        ollama pull gemma3:4b
         echo "Pulling qwen3:4b model..."
         ollama pull qwen3:4b
         echo "Pulling embedding model nomic-embed-text..."
@@ -87,7 +89,6 @@ services:
     restart: "no"
     networks:
       - gidroatlas-network
-
   # GidroAtlas API Service
   api:
     image: mcr.microsoft.com/dotnet/sdk:8.0
@@ -105,12 +106,12 @@ services:
       - JwtSettings__ExpirationMinutes=480
       - ML__ModelType=Advanced
       - Ollama__BaseUrl=http://ollama:11434
-      - Ollama__ChatModel=qwen3:4b
+      - Ollama__ChatModel=gemma3:4b
       - Ollama__EmbeddingModel=nomic-embed-text
       - Ollama__TimeoutSeconds=60
-      - Ollama__Temperature=0.3
-      - Ollama__MaxTokens=1024
-      - Ollama__NumCtx=4096
+      - Ollama__Temperature=0.7
+      - Ollama__MaxTokens=4096
+      - Ollama__NumCtx=8192
       - CorsSettings__AllowedOrigins__0=http://web:8080
       - PASPORTS_PATH=/src
     volumes:
